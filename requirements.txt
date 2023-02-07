@@ -1,6 +1,7 @@
 #Flask-SQLite3
 #pysqlite3
-plotly==4.14.3
+#plotly==4.14.3
+plotly==5.13.0
 pandas==1.2.3
 click<=8.0.4
 #streamlit==0.78.0 
