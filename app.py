@@ -15,6 +15,7 @@ import main_contribute
 import main_about
 import main_plotly_chart1
 import main_mapping
+import main_sqlite3
 
 PAGES = {
     "Home": main_home,
@@ -23,7 +24,9 @@ PAGES = {
     "About": main_about,
     "Contribute": main_contribute,
     "Plotly_Chart1": main_plotly_chart1,
-    "Mapping": main_mapping
+    "Mapping": main_mapping,
+    "Sqlite3": main_sqlite3
+    
  
 }
 
