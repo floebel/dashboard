@@ -18,13 +18,13 @@ import os
 import sys
 import math
 import numpy as np
-import seaborn as sns
+#import seaborn as sns
 # sns.set(style="ticks", color_codes=True)
 # plt.style.use('seaborn')
 #cmap = 'tab10'
 #sns.set_style("white")
 
-sns.set_style('whitegrid')
+#sns.set_style('whitegrid')
 # Save a palette to a variable:
 #palette = sns.color_palette("bright")
 
@@ -32,7 +32,7 @@ sns.set_style('whitegrid')
 
 #current_palette = sns.color_palette()
 #sns.palplot(current_palette)
-sns.set_palette("bright")
+#sns.set_palette("bright")
 #sns.color_palette(palette = None, n_colors = None, desat = None)
 
 import os
