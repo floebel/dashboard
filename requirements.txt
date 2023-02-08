@@ -2,7 +2,6 @@
 #urllib
 probscale
 seaborn
-json
 #pysqlite3
 #plotly==4.14.3
 plotly==5.13.0
@@ -30,7 +29,7 @@ protobuf==3.13.0
 #streamlit==0.62.0
 #plotly==4.8.2
 PIL
-
+#json
 #--find-links=https://girder.github.io/large_image_wheels GDAL
 # cartopy
 #geemap
