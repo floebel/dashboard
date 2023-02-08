@@ -7,7 +7,7 @@ from sqlite3_functions import *
 import streamlit as st
 import sqlite3
 import pandas as pd
-import seaborn as sns
+#import seaborn as sns
 import probscale
 from scipy.stats import norm
 import matplotlib.pyplot as plt
@@ -111,7 +111,7 @@ def main():
       ax.set_xlabel('Data Values')
       ax.legend()
 
-      sns.despine()
+      #sns.despine()
       st.pyplot(fig)
 
       

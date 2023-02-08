@@ -7,14 +7,14 @@ from sqlite3_functions import *
 import streamlit as st
 import sqlite3
 import pandas as pd
-import seaborn as sns
+#import seaborn as sns
 import plotly.express as px
 #import probscale
 #from scipy.stats import norm
 import matplotlib.pyplot as plt
 
 import leafmap.foliumap as leafmap
-import leafmap.kepler as leafmap
+#import leafmap.kepler as leafmap
 #import folium
 
 
