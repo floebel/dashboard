@@ -1,12 +1,5 @@
 
 import streamlit as st
-#import src.pages.home
-#import src.pages.data
-#import src.pages.dashboard
-#import src.pages.contribute
-#import src.pages.about
-#import src.pages.plotly_chart1
-#import src.pages.mapping
 
 import main_home
 import main_data
@@ -16,6 +9,10 @@ import main_about
 import main_plotly_chart1
 import main_mapping
 import main_sqlite3
+import main_geojson
+import main_probit
+import main_lat_long
+
 
 PAGES = {
     "Home": main_home,
@@ -25,7 +22,10 @@ PAGES = {
     "Contribute": main_contribute,
     "Plotly_Chart1": main_plotly_chart1,
     "Mapping": main_mapping,
-    "Sqlite3": main_sqlite3
+    "Sqlite3": main_sqlite3,
+    "Probit": main_probit,
+    "GeoJson": main_geojson,
+    "Lat Long Maps": main_lat_long
     
  
 }
