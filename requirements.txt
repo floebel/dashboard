@@ -27,7 +27,7 @@ protobuf==3.13.0
 #numpy==1.19.0
 #streamlit==0.62.0
 #plotly==4.8.2
-PIL
+#PIL
 #json
 #--find-links=https://girder.github.io/large_image_wheels GDAL
 # cartopy
