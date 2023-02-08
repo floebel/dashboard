@@ -43,9 +43,10 @@ leaflet
 #streamlit-bokeh-events
 folium
 streamlit-folium
-streamlit-keplergl
+#streamlit-keplergl
 #tropycal
-math
+#math
+cmath
 # git+https://github.com/giswqs/leafmap
 # git+https://github.com/giswqs/geemap
 #Pillow==8.1.1

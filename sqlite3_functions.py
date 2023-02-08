@@ -14,9 +14,9 @@ import sqlalchemy
 #from sqlalchemy.orm import Session
 from sqlalchemy import create_engine, func, inspect 
 
-from math import sqrt
-import math
-
+#from math import sqrt
+#import math
+import cmath 
 """
            writec(17,"Updating User12 with Miles Away from Entered Lat/Long")
 	        	cUpdate := "UPDATE Lease SET User12 = "
@@ -356,7 +356,7 @@ def fig_lat_length(row):
    if any_BotLat == 0.0 or any_BotLong == 0.0:
       any_lateral_length = 0.0
    else:
-      any_lateral_length = abs(5280.0 * 69.1* math.sqrt (( any_BotLat - any_SurfLat ) ** 2.0 + 0.6 * ( any_BotLong - any_SurfLong ) ** 2.0 )) - 700.0   # AS 'SL-BHL-800FT', " feet ...
+      any_lateral_length = abs(5280.0 * 69.1* cmath.sqrt (( any_BotLat - any_SurfLat ) ** 2.0 + 0.6 * ( any_BotLong - any_SurfLong ) ** 2.0 )) - 700.0   # AS 'SL-BHL-800FT', " feet ...
 
    any_lateral_length = abs(any_lateral_length)
    return int(any_lateral_length)
