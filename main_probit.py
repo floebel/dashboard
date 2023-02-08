@@ -10,7 +10,7 @@ import sqlite3
 import pandas as pd
 #import seaborn as sns
 import probscale
-from scipy.stats import norm
+#from scipy.stats import norm
 import matplotlib.pyplot as plt
 
 
@@ -117,18 +117,18 @@ def main():
 
       
 
-   if 1 == 2:
-      # Generate 20 random numbers from the normal distribution
-      data = norm.rvs(size=20)
-      st.subheader("Probit Plot")
-      fig = plt.figure(figsize=(10, 4))
-      plt.title("Probit Plot", fontsize = 12)
-      #fig.ylabel('y label')
-      #fig.xlabel('x label')
+   #if 1 == 2:
+   #   # Generate 20 random numbers from the normal distribution
+   #   data = norm.rvs(size=20)
+   #   st.subheader("Probit Plot")
+   #   fig = plt.figure(figsize=(10, 4))
+   #   plt.title("Probit Plot", fontsize = 12)
+   #   #fig.ylabel('y label')
+   #   #fig.xlabel('x label')
    
-      probscale.probplot(data, probax='y')
-      sns.despine()
-      st.pyplot(fig)
+   #   probscale.probplot(data, probax='y')
+   #   sns.despine()
+   #   st.pyplot(fig)
    
    if 1 == 2:
       st.subheader("Summary Data of Lease Count By County")

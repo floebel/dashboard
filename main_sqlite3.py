@@ -10,7 +10,7 @@ import sqlite3
 import pandas as pd
 import seaborn as sns
 import probscale
-from scipy.stats import norm
+#from scipy.stats import norm
 import matplotlib.pyplot as plt
 import plotly.express as px  # pip install plotly-express
 
