@@ -1,6 +1,12 @@
 
 import streamlit as st
-from PIL import Image
+#from PIL import Image
+
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+
+
+
 import plotly.express as px
 import json
 from urllib.request import urlopen
@@ -17,7 +23,18 @@ def main():
     
     #image = Image.open("assets/monalisa-4893660_640.jpg")
     #image = Image.open("rocket.jpg")
- 
+    # Read the image file
+    #img = mpimg.imread('image.png')
+
+    # Display the image
+    #plt.imshow(img)
+    #plt.show()
+    # Read the image file
+    #img = mpimg.imread('image.png')
+
+    # Display the image
+    #plt.imshow(img)
+    #plt.show()
     #st.image(image)
     #st.title("COVID-19 Dashboard")
     st.write("""

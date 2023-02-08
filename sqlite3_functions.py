@@ -8,7 +8,12 @@ import sqlite3
 #from sqlalchemy.ext.automap import automap_base
 #from sqlalchemy.orm import Session
 #from sqlalchemy import create_engine, func, inspect 
-#Create engine 
+#Create engine
+import sqlalchemy
+#from sqlalchemy.ext.automap import automap_base
+#from sqlalchemy.orm import Session
+from sqlalchemy import create_engine, func, inspect 
+
 from math import sqrt
 import math
 
@@ -1014,10 +1019,7 @@ def create_empty_sqlite_table(database, db_sqlite, new_table):
    #print("new_table = ", new_table)
    #print()
    
-   import sqlalchemy
-   #from sqlalchemy.ext.automap import automap_base
-   #from sqlalchemy.orm import Session
-   from sqlalchemy import create_engine, func, inspect 
+   
    #Create engine 
    engine = create_engine(database)
    cnx = engine.connect()

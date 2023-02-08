@@ -2,15 +2,23 @@ import streamlit as st
 from datetime import datetime, timedelta
 from load_data import load_data
 from fetch_url import fetch_url
-from PIL import Image
+#from PIL import Image
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+
 
 
 
 def main():
     
     #img = Image.open("assets/covid-19-4960246_640.jpg")
-    img = Image.open("rocket.jpg")
-   
+    #img = Image.open("rocket.jpg")
+    # Read the image file
+    img = mpimg.imread('rocket.jpg')
+
+    # Display the image
+    #plt.imshow(img)
+    #plt.show()
     st.image(img)
     st.title("Data")
     date = datetime.today()
