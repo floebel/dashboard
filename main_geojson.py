@@ -4,6 +4,7 @@ from PIL import Image
 import plotly.express as px
 import json
 from urllib.request import urlopen
+
 import pandas as pd
 
 def main():

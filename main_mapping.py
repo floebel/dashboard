@@ -7,6 +7,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
+
 @st.cache
 def load_data_once():
    csv_path = "d:/data/"

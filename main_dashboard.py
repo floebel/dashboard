@@ -14,6 +14,7 @@ from load_css import local_css
 from load_time_series import load_time_series
 
 
+
 @st.cache
 def plot_snapshot_numbers(df, colors, date, country=None):
     """

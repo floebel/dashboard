@@ -4,6 +4,7 @@ import time
 
 def change_photo_state():
     st.session_state["photo"] = "done"
+    
   
      
 

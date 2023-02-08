@@ -5,6 +5,7 @@ from fetch_url import fetch_url
 from PIL import Image
 
 
+
 def main():
     
     #img = Image.open("assets/covid-19-4960246_640.jpg")

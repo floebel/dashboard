@@ -5,6 +5,7 @@ import pandas as pd
 #from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 
+
 @st.cache
 def load_data_once():
    csv_path = "d:/data/"

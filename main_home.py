@@ -1,6 +1,7 @@
 import streamlit as st
 from PIL import Image
 
+
 def main():
 
     st.title("COVID-19 Dashboard")
