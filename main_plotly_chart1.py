@@ -8,7 +8,7 @@ import pandas as pd
 
 @st.cache
 def load_data_once():
-   csv_path = "d:/data/"
+   csv_path = ""
    csv_name = "clean_iris.csv"
    csv_path_name = csv_path + csv_name
    df = pd.read_csv(csv_path_name, header=0)
@@ -50,8 +50,7 @@ def main():
       max_value = max(list_sepal_length)
       st.write(str(min_value))
       st.write(str(max_value))
-     
-      
+          
  
 
    with features:

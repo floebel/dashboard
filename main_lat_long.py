@@ -112,8 +112,6 @@ def main():
 
 
 
-
-
    if 1 == 2: # WORKS
       st.title("Heatmap") 
       filepath = "https://raw.githubusercontent.com/giswqs/leafmap/master/examples/data/us_cities.csv"
