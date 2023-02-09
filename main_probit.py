@@ -25,14 +25,14 @@ def main():
    
    # oENGINE, oSQLITE = open_sqlite_conn(database, db_sqlite)
 
-   db_sqlite = 'hz_kansas.sqlite'
+   #db_sqlite = 'hz_kansas.sqlite'
    #db_sqlite = 'hz_oklahoma.sqlite'
-  
-   database = 'sqlite:///' + db_sqlite   
-   oENGINE, oSQLITE = open_sqlite_conn(database, db_sqlite)
-   list_tables = get_database_tables(oENGINE)
-   if 1 == 2:
-      st.write(list_tables)
+   # 
+   #database = 'sqlite:///' + db_sqlite   
+   #oENGINE, oSQLITE = open_sqlite_conn(database, db_sqlite)
+   #list_tables = get_database_tables(oENGINE)
+   #if 1 == 2:
+   #   st.write(list_tables)
 
    if 1 == 2:
       st.subheader("Lateral Length Analysis")
@@ -43,7 +43,7 @@ def main():
    cSQL += "FROM Lease"
  
    # LIMIT 10 
-   df_lat_long = database_to_df(oENGINE, cSQL)
+   df_lat_long = df_from_sqlite("KS", cSQL)
    df_lat_long.insert(2, 'Lateral_Length', df_lat_long.apply(lambda row: fig_lat_length(row), axis=1))  
    df_lat_long = df_lat_long.query('Lateral_Length > 1000.0')  
 
@@ -134,8 +134,8 @@ def main():
       st.subheader("Summary Data of Lease Count By County")
       cSQL  = "SELECT count(COUNTY) AS 'LEASE COUNT', COUNTY, STATE FROM Lease "
       cSQL += "GROUP BY COUNTY ORDER BY count(COUNTY) DESC"
-      # LIMIT 10 
-      df_county_summary = database_to_df(oENGINE, cSQL)
+      # LIMIT 10
+      df_county_summary = df_from_sqlite("KS", cSQL)
       st.dataframe(df_county_summary)
 
 
@@ -146,141 +146,18 @@ def main():
 
 
    if 1 == 2:
-      df_lease = database_to_df(oENGINE, "SELECT * FROM Lease")
+      df_lease = df_from_sqlite("KS","SELECT * FROM Lease")
       df_to_webbrowser("df_lease", df_lease)
       st.dataframe(df_prod)
       list_lease = list(df_lease.columns)
       st.write(list_lease)
 
    if 1 == 2:
-      df_prod = database_to_df(oENGINE, "SELECT * FROM LeaseProduction")
+      df_prod = df_from_sqlite("KS","SELECT * FROM LeaseProduction")
       df_to_webbrowser("df_prod", df_prod)
       st.dataframe(df_prod)
       list_prod = list(df_prod.columns)
       st.write(list_prod)
-
-   #sql = "UPDATE citations SET first_author = ( SELECT initial_author FROM lookups WHERE lookups.pmid = citations.pmid )"    
-
-   #cur.execute("DROP TABLE IF EXISTS citations")
-
-   #sql_within_database(oSQLITE, sql)
-
-
-   if 1 == 2:
-      df = database_to_df(oENGINE, "SELECT * FROM articles")
-      get_sqlite_table_info(oENGINE, oSQLITE)
-
-      cSQL  = "SELECT gsm, series_id, gpl, description, title, source_name_ch1 "
-      cSQL += "FROM gsm "
-      cSQL += "WHERE organism_ch1 = 'Homo sapiens' "
-      cSQL += "AND description NOT LIKE '%https%' "
-      cSQL += "AND description NOT LIKE 'Gene expression%' "
-      cSQL += "AND description NOT LIKE 'Gene_expression%' "
-      cSQL += "AND description NOT LIKE 'The collected%' "
-
-      cSQL += "AND title NOT LIKE 'PLACENTA%' "
- 
-      cSQL += "AND type = 'RNA' " 
-      cSQL += "AND gpl LIKE 'GPL1%' AND series_id IS NOT NULL " 
-      cSQL += "AND description IS NOT NULL AND title IS NOT NULL "
-      cSQL += "AND source_name_ch1 IS NOT NULL "  
-      cSQL += "ORDER BY series_id, gsm LIMIT 100000 "
-     
- 
-      df = database_to_df(oENGINE, cSQL)
-
-      cSQL = "SELECT DISTINCT series_id, gpl FROM gsm WHERE gpl LIKE 'GPL1%' AND series_id IS NOT NULL ORDER BY gpl" #  LIMIT 500"
- 
-      df = database_to_df(oENGINE, cSQL)
-      create_pubmed_articles_table(oSQLITE)
-      create_pubmed_citations_table(oSQLITE)
-
-      #elif one_table == "INDEX":
-
-      #Another way to get all indexes from a database is to query from the sqlite_master table:
-      sql = "SELECT type, name, tbl_name, sql FROM sqlite_master WHERE type= 'index'"
-      df = database_to_df(oENGINE, sql)
-      #print("df.head(100) of INDEXES")
-      #print(df.head(100))
-      #input("wait")
-
-   if 1 == 2:  # WORKS ONE FIELD AT A TIME 
-      sql = "UPDATE citations SET first_author = ( SELECT initial_author FROM lookups WHERE lookups.pmid = citations.pmid )"    
-      sql_within_database(oSQLITE, sql)
-
-      sql = "UPDATE citations SET last_author = ( SELECT final_author FROM lookups WHERE lookups.pmid = citations.pmid )"    
-      sql_within_database(oSQLITE, sql)
-
-
-   if 1 == 2:
-      df = database_to_df(oENGINE, "SELECT * FROM citations WHERE first_author IS NOT NULL and last_author IS NOT NULL ORDER BY pmid, citationid")
-      print("df.head(100) of citations sorted by pmid, citationid ")
-      print(df.head(100))
-      input("wait")
-      #elif one_table == "TEMP":
-                         
-      #sql = "INSERT OR IGNORE INTO articles SELECT pmid, pmcid, title, year, journal, xml_file, doi, abstract FROM temp" 
-      sql = "INSERT OR REPLACE INTO articles SELECT pmid, pmcid, title, year, journal, xml_file, doi, abstract FROM temp" 
-
-      print("insert or replace records from temp table to articles table")
-      start_time = start_timer()
-      sql_within_database(oSQLITE, sql)
-      end_timer(start_time)
- 
-      #elif one_table == "articles":
-
-      print("rows = ", len(df_all), "before dropping duplicates")
-      start_time = start_timer()
-      df_all = df_all.drop_duplicates(subset=['pmid'], keep="first")
-      end_timer(start_time)
-   
-      print("rows = ", len(df_all), "after dropping duplicates")
-   
-
-   if 1 == 2:
-      cnx = oENGINE.connect()
-
-      print("appending", len(df_all),"records to temp table")
-
-      #df_all["first_author"] = ""
-      #df_all["last_author"] = ""
-
-      start_time = start_timer()
-      df_all.to_sql("temp", cnx, if_exists='replace', index = False)  # if_exists='append' 'replace'   
-      end_timer(start_time)
-
-      get_sqlite_database_info(oENGINE, oSQLITE)
-      end_timer(start_time)
-
-
-      oSQLITE.close()
-      #oENGINE.close()
-      print()
-      print("closed connections to oSQLITE and oENGINE")
-      print()
-
-
-     
-   if 1 == 2:
-
-      conn = sqlite3.connect('millbrae_2019.sqlite')
-      cursor = conn.cursor()
-
-      st.write("Connected to the SQLite database")
-
-      query = "SELECT * FROM Lease"
-
-      if 1 == 2:
-         result = cursor.execute(query).fetchall()
-         st.write("Result of the query:", result)
-      else:
-         query = "SELECT * FROM Lease"
-         df = pd.read_sql_query(query, conn)
-
-         st.write("Result of the query:")
-         st.dataframe(df)
-
-      conn.close()
 
           
    #from flask import Flask

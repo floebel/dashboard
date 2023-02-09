@@ -2,12 +2,12 @@
 import streamlit as st
 
 import main_home
-import main_data
+#import main_covid_data
 #import main_dashboard
 import main_contribute
 import main_about
 import main_plotly_chart1
-import main_mapping
+#import main_mapping
 import main_sqlite3
 import main_geojson
 import main_probit
@@ -17,11 +17,9 @@ import main_lat_long
 
 PAGES = {
     "Home": main_home,
-    "Data": main_data,
     "About": main_about,
     "Contribute": main_contribute,
     "Plotly_Chart1": main_plotly_chart1,
-    "Mapping": main_mapping,
     "Sqlite3": main_sqlite3,
     "Probit": main_probit,
     "GeoJson": main_geojson,
@@ -29,6 +27,8 @@ PAGES = {
     }
 
 #    "Dashboard": main_dashboard,
+#    "Covid Data": main_covid_data,
+#    "Mapping": main_mapping,
 
 
 def main():

@@ -9,10 +9,10 @@ import sqlite3
 #from sqlalchemy.orm import Session
 #from sqlalchemy import create_engine, func, inspect 
 #Create engine
-import sqlalchemy
+#import sqlalchemy
 #from sqlalchemy.ext.automap import automap_base
 #from sqlalchemy.orm import Session
-from sqlalchemy import create_engine, func, inspect 
+#from sqlalchemy import create_engine, func, inspect 
 
 #from math import sqrt
 #import math
@@ -622,6 +622,28 @@ def Replace(any_before, any_find, any_replace):  # VB6  # also in fdl_sub_utilit
    return any_after
 
 
+def df_from_sqlite(any_state, query):
+
+   if any_state == "OK":
+      conn = sqlite3.connect('hz_oklahoma.sqlite')
+      #cursor = conn.cursor()
+   elif any_state == "KS":
+      conn = sqlite3.connect('hz_kansas.sqlite')
+      #cursor = conn.cursor()
+
+   #result = cursor.execute(query).fetchall()
+   #st.write("Result of the query:", result)    
+   df = pd.read_sql_query(query, conn)
+
+   #   st.write("Result of the query:")
+   #   st.dataframe(df)
+
+   conn.close()
+   return df
+
+
+
+
 
 def open_sqlite_conn(database, db_sqlite):
 
@@ -643,13 +665,14 @@ def open_sqlite_conn(database, db_sqlite):
    oSQLITE = sqlite3.connect(db_sqlite)
    #print("oSQLITE object is connected to", db_sqlite)
 
-   oENGINE = create_engine(database)
+   #oENGINE = create_engine(database)
+   oENGINE = ""
    #print("oENGINE object is connected to", database)
 
         
    # Inspecting data
-   insp = inspect(oENGINE)
-   list_tables = insp.get_table_names()   # WORKS
+   #insp = inspect(oENGINE)
+   #list_tables = insp.get_table_names()   # WORKS
    #print("list_tables")
    #print(list_tables)
    

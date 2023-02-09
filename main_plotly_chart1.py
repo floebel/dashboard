@@ -17,7 +17,7 @@ def load_data_once():
 
 
 def main():
-   st.title("Contribute")
+   st.title("Plotly Chart")
    st.info("Feel free to contribute to this open source project")
 
    header = st.container()
