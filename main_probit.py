@@ -8,7 +8,8 @@ from sqlite3_functions import *
 import streamlit as st
 import sqlite3
 import pandas as pd
-#import seaborn as sns
+import numpy as np
+import seaborn as sns
 import probscale
 #from scipy.stats import norm
 import matplotlib.pyplot as plt
@@ -22,28 +23,26 @@ def main():
    #    This app is maintained by Fulton Loebel
    #    """
    #)
-   
-   # oENGINE, oSQLITE = open_sqlite_conn(database, db_sqlite)
 
-   #db_sqlite = 'hz_kansas.sqlite'
-   #db_sqlite = 'hz_oklahoma.sqlite'
-   # 
-   #database = 'sqlite:///' + db_sqlite   
-   #oENGINE, oSQLITE = open_sqlite_conn(database, db_sqlite)
-   #list_tables = get_database_tables(oENGINE)
-   #if 1 == 2:
-   #   st.write(list_tables)
+
+   
+
+   # 	 //		   	cSelect += " (SELECT COUNT(*) FROM LeaseProduction P WHERE P.LeaseID = L.LeaseID) AS [PROD_PTS], "       // not working ............
+   #cSelect += " (SELECT COUNT(*) FROM LeaseProduction P WHERE P.LeaseID = L.LeaseID AND ( P.Oil > 0 OR P.Gas > 0 ) ) AS [PROD_PTS], "   # not working ............
+   #    cSelect += "L.FirstProdDate AS [FIRST_DATE], (L.LastProdDate) AS [LAST_DATE], "
+
+
 
    if 1 == 2:
       st.subheader("Lateral Length Analysis")
 
-   cSQL  = "SELECT LeaseID, LeaseName, SurfaceLatitude AS 'SurfLat', SurfaceLongitude AS 'SurfLong', "
+   cSQL  = "SELECT API, LeaseID, LeaseName, SurfaceLatitude AS 'SurfLat', SurfaceLongitude AS 'SurfLong', "
    cSQL += "BottomLatitude AS 'BotLat', BottomLongitude AS 'BotLong', OPERATOR AS 'Operator', "
    cSQL += "Reservoir "
    cSQL += "FROM Lease"
  
    # LIMIT 10 
-   df_lat_long = df_from_sqlite("KS", cSQL)
+   df_lat_long = df_from_sqlite("OK", cSQL)
    df_lat_long.insert(2, 'Lateral_Length', df_lat_long.apply(lambda row: fig_lat_length(row), axis=1))  
    df_lat_long = df_lat_long.query('Lateral_Length > 1000.0')  
 
@@ -51,7 +50,7 @@ def main():
 
    
    df_morrow = df_lat_long.copy()
-   df_morrow = df_morrow.query('Reservoir == "MORROW"')  
+   df_morrow = df_morrow.query('Reservoir == "WOODFORD"')  # WOODFORD
    #list_morrow_include = ["Reservoir", "Lateral_Length"]
    #df_morrow = df_lat_long[list_morrow_include]
  
@@ -61,9 +60,8 @@ def main():
    #df_morrow = df_lat_long[list_morrow_include]
    #np_lat_long_morrow = df_morrow["Lateral_Length"].values  
  
-   st.subheader("Lateral Length Analysis")
-   if 1 == 2:
-      st.dataframe(df_lat_long)
+   st.subheader("Lateral Length Table")
+  
 
 
    if 1 == 1:
@@ -76,7 +74,7 @@ def main():
                    probax='y',
                    bestfit=True,
                    datascale='log',
-                   label='Lateral Length All Kansas', # for the legend
+                   label='Lateral Length All Oklahoma', # for the legend
                    ax=ax,
                    color='red'
                    )
@@ -86,30 +84,45 @@ def main():
                    probax='y',
                    bestfit=True,
                    datascale='log',
-                   label='Lateral Length Morrow Reservoir',
+                   label='Lateral Length Woodford Reservoir',
                    ax=ax,
                    color='blue'
                    )
 
       # Select the ticks to label
-      ax.set_yticks([1, 2, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 98, 99])
+
+      if 1 == 2: 
+         ax.set_yticks([1, 2, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 98, 99])
+      else:
+         ax.set_yticks([0.10, 0.20, 0.5, 1, 2, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 98, 99])
+ 
 
       # Reverse the tick labels for the convention where P10 is the 90th percentile
       ax.set_yticklabels(100 - ax.get_yticks())
 
-      # Add and annotate the P10, P50, and P90 lines
-      ax.axhline(90, color='k', linewidth=.5)
-      ax.axhline(50, color='k', linewidth=.5)
-      ax.axhline(10, color='k', linewidth=.5)
+      ax.set_xticks([1000, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 7000, 8000, 10000])
+      ax.set_xticklabels(ax.get_xticks())
 
-      ax.annotate('P10', xy=(.9, .78), xycoords='axes fraction', fontsize=16)
-      ax.annotate('P50', xy=(.9, .51), xycoords='axes fraction', fontsize=16)
-      ax.annotate('P90', xy=(.9, .23), xycoords='axes fraction', fontsize=16)
+
+      if 1 == 1:
+         # Add and annotate the P10, P50, and P90 lines
+         ax.axhline(90, color='k', linewidth=.5)
+         ax.axhline(50, color='k', linewidth=.5)
+         ax.axhline(10, color='k', linewidth=.5)
+
+         ax.annotate('P10', xy=(.9, .78), xycoords='axes fraction', fontsize=16)
+         ax.annotate('P50', xy=(.9, .51), xycoords='axes fraction', fontsize=16)
+         ax.annotate('P90', xy=(.9, .23), xycoords='axes fraction', fontsize=16)
 
       # Add the title, axis labels, and the legend
-      ax.set_title('Probit Plot', fontsize=16)
-      ax.set_ylabel('Exceedance Probability')
-      ax.set_xlabel('Data Values')
+      ax.set_title('Probit Plot', fontsize=16, fontweight='bold')
+      ax.set_ylabel('Exceedance Probability', fontsize=12, fontweight='bold')
+      ax.set_xlabel('Lateral Length of Horizontal Wells', fontsize=12, fontweight='bold')
+
+
+      ax.xaxis.grid(True, which='major')
+      ax.yaxis.grid(False, which='major')
+      
       ax.legend()
 
       #sns.despine()

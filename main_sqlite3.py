@@ -8,6 +8,7 @@ from sqlite3_functions import *
 import streamlit as st
 import sqlite3
 import pandas as pd
+import numpy as np
 import seaborn as sns
 import probscale
 import matplotlib.pyplot as plt

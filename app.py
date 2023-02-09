@@ -12,6 +12,7 @@ import main_sqlite3
 import main_geojson
 import main_probit
 import main_lat_long
+import main_hyperbolic
 
 
 
@@ -20,6 +21,7 @@ PAGES = {
     "About": main_about,
     "Contribute": main_contribute,
     "Plotly_Chart1": main_plotly_chart1,
+    "Hyperbolic Curve Fit": main_hyperbolic,
     "Sqlite3": main_sqlite3,
     "Probit": main_probit,
     "GeoJson": main_geojson,
