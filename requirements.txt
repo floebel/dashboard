@@ -33,7 +33,7 @@ protobuf==3.13.0
 # cartopy
 #geemap
 #jupyter-server-proxy
-#leafmap
+leafmap
 leaflet
 #localtileserver
 #nbserverproxy
