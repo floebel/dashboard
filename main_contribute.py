@@ -12,7 +12,7 @@ import plotly.graph_objects as go
 def load_data_once():
    csv_path = ""
    csv_name = "clean_iris.csv"
-   csv_path_name = csv_path + csv_name
+   csv_path_name = csv_name
    df = pd.read_csv(csv_path_name, header=0)
    #st.write(df.head(10))   
    return df
