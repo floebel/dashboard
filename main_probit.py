@@ -173,13 +173,5 @@ def main():
       st.write(list_prod)
 
           
-   #from flask import Flask
-   #from flask_sqlite3 import SQLite3
-
-   #app = Flask(__name__)
-   #app.config['SQLITE3_DATABASE_URI'] = 'sqlite:///test.db'
-   #db = SQLite3(app)
-
-
-
+  
    
