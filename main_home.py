@@ -18,7 +18,7 @@ import matplotlib.image as mpimg
 
 def main():
 
-    st.title("COVID-19 Dashboard")
+    st.title("Home")
     #st.info(
     #     """
     #     This app is maintained by Fulton Loebel.
