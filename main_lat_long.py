@@ -4,7 +4,6 @@ from fdl_sub_html_small import *
 
 from sqlite3_functions import *
 
-
 import streamlit as st
 import sqlite3
 import pandas as pd
@@ -107,7 +106,7 @@ def main():
          ).add_to(m)
 
       events = st_folium(m)
-      st.write(events)
+      #st.write(events)
 
 
 

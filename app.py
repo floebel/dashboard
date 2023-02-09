@@ -3,7 +3,7 @@ import streamlit as st
 
 import main_home
 import main_data
-import main_dashboard
+#import main_dashboard
 import main_contribute
 import main_about
 import main_plotly_chart1
@@ -18,7 +18,6 @@ import main_lat_long
 PAGES = {
     "Home": main_home,
     "Data": main_data,
-    "Dashboard": main_dashboard,
     "About": main_about,
     "Contribute": main_contribute,
     "Plotly_Chart1": main_plotly_chart1,
@@ -27,9 +26,10 @@ PAGES = {
     "Probit": main_probit,
     "GeoJson": main_geojson,
     "Lat Long Maps": main_lat_long
-    
- 
-}
+    }
+
+#    "Dashboard": main_dashboard,
+
 
 def main():
     st.sidebar.title("Menu")
