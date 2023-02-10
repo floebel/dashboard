@@ -1,4 +1,5 @@
 #Flask-SQLite3
+scipy
 #urllib
 probscale
 seaborn

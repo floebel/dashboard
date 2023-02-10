@@ -4,6 +4,7 @@ from fdl_sub_html_small import *
 
 
 from sqlite3_functions import *
+from dca_functions import *
 
 import streamlit as st
 import sqlite3
@@ -568,10 +569,11 @@ def fig_df_summary():
 
 
 
-def fig_group_by():  
+def fig_group_by(any_state):  
    
    # GROUP BY
-   cSelect  = "SELECT P.Year, P.Month, P.Oil, P.Gas, "
+   #cSelect  = "SELECT P.Year, P.Month, P.Oil, P.Gas, "
+   cSelect  = "SELECT P.CUMUL_MONTHS, "
    cSelect += " Sum(P.Oil) AS 'OIL_SUM', "
    #cSelect += " Sum(P.Water) AS 'WATER_SUM', " 
    cSelect += " Sum(P.Gas) AS 'GAS_SUM', " 
@@ -600,23 +602,37 @@ def fig_group_by():
    #cSelect += "L.Reservoir "
    #cSQL += "FROM Lease"
    cFrom   = " FROM Lease L LEFT OUTER JOIN LeaseProduction P ON L.LeaseID = P.LeaseID "
-   cWhere  = " WHERE L.BottomLatitude > 1 AND P.Year >= 2005 "
-   nProdPoints = 24
+   cWhere  = " WHERE L.LAT_LENGTH >= 1000 AND L.MAX_MONTHS >= 72 "
+   cWhere += " AND P.CUMUL_MONTHS >= 0 "
+   cWhere += " AND (P.Oil > 0 OR P.Gas > 0) "
+ 
+   #nProdPoints = 24
    #cWhere += " AND (SELECT count(*) FROM LeaseProduction PROD WHERE PROD.LeaseID = L.LeaseID) >= " + str(nProdPoints) + " "
-   cWhere += " AND (SELECT count(*) FROM LeaseProduction PROD WHERE PROD.LeaseID = L.LeaseID) >= 24 AND (P.Oil > 0 OR P.Gas > 0) "
+   #cWhere += " AND (SELECT count(*) FROM LeaseProduction PROD WHERE PROD.LeaseID = L.LeaseID) >= 24 AND (P.Oil > 0 OR P.Gas > 0) "
       
    #cWhere += " AND L.COUNTY = 'OKLAHOMA' "
    #cWhere += " AND L.COUNTY = 'GRADY' "
    cWhere += "	AND L.County IN ('OKLAHOMA', 'GRADY', 'CLEVELAND','WOODS','ALFALFA','GRANT','MAJOR','GARFIELD','BLAINE','KINGFISHER','LOGAN','CANADIAN') "
 
-   cOrderBy = " GROUP BY P.Year, P.Month "
+   cOrderBy = " GROUP BY P.CUMUL_MONTHS "
  
    cSQL = cSelect + cFrom + cWhere + cOrderBy
-   df_groupby = df_from_sqlite("OK", cSQL)
+   df = df_from_sqlite(any_state, cSQL)
+
+   df["Ave Monthly Oil Per Well"] = df["OIL_SUM"] / df["OIL_PTS"]
+
+   df["Ave Monthly Gas Per Well"] = df["GAS_SUM"] / df["GAS_PTS"]
+
+   list_drop = ["OIL_SUM", "GAS_SUM"] 
+   df = df.drop(list_drop, axis=1)
+
+   df.to_csv("normalized_monthly_production.csv", index=False)
+   
+   
    if 1 == 2:
-      st.subheader("df_groupby")
-      st.dataframe(df_groupby)  
-   return df_groupby
+      st.subheader("df _groupby")
+      st.dataframe(df)  
+   return df
   
 
 
@@ -642,9 +658,11 @@ def main():
 
 
    
-   st.subheader("Query Using Lease and LeaseProduction Tables")
+   st.subheader("Ave Normalized Production Per Well")
 
-   df = fig_group_by()
+   any_state = "OK"
+   
+   df = fig_group_by(any_state)
    #df = fig_df_lease()
    #df = fig_df_summary()
    
@@ -662,9 +680,37 @@ def main():
 
    #df_county_summary = database_to_df(oENGINE, cSQL)
    #df_county_summary = df_county_summary.head(20)
-
+   
    
    st.dataframe(df)
+
+   series_time = df['CUMUL_MONTHS']
+   series_rate = df['Ave Monthly Gas Per Well']    
+   # q = df['Ave Monthly Oil Per Well']
+
+   if 1 == 2:   
+      
+      plt.figure(figsize=(10,7))
+      plt.step(series_time, series_rate, color='blue')
+      plt.title('Production Rate vs Time Plot', size=20, pad=15)
+      plt.xlabel('Months')
+      plt.ylabel('Volume Per Month')
+      plt.xlim(min(series_time), max(series_time))
+      plt.ylim(ymin=0)
+      plt.grid()
+      plt.show()
+
+
+   qi, di, b, RMSE = arps_fit("TIME", series_time, series_rate, plot=False)
+   cstr = "qi = " + str(qi)
+   st.write(cstr)
+   cstr = "di = " + str(di)
+   st.write(cstr)
+   cstr = "b = " + str(b)
+   st.write(cstr)
+   cstr = "RMSE = " + str(RMSE)
+   st.write(cstr)
+   
 
    # plot the data
    #fig_scatter = px.scatter(df_county_summary, x='LEASE COUNT', y='COUNTY', 
