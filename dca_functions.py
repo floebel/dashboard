@@ -1,5 +1,7 @@
 
 
+from fdl_sub_html_small import *
+
 import numpy as np
 import datetime
 from scipy.optimize import curve_fit
@@ -11,11 +13,12 @@ def hyperbolic(t, qi, di, b):
   Hyperbolic decline function
   """
   import numpy as np
-  return qi / (np.abs((1 + b * di * t))**(1/b))
+  return qi / ((1.0 + b * di * t) ** (1.0 / b))
+  #return qi / (np.abs((1 + b * di * t))**(1/b))
 
 
 
-def arps_fit(DATE_OR_TIME, t, q, plot=None):
+def arps_fit(DATE_OR_TIME, WT_OR_STD, t, q_rate, plot=None):
 
   if DATE_OR_TIME == "DATE":
 
@@ -29,8 +32,13 @@ def arps_fit(DATE_OR_TIME, t, q, plot=None):
      # t is pandas series
     
      np_cum_months = np.asarray(t)
+
+     
+     np_cum_years = np.multiply(np_cum_months, 0.083333333333)
      np_cum_days = np.multiply(np_cum_months, 30.4375)
-     np_cum_days= np_cum_days.astype(float)
+     np_cum_days = np_cum_days.astype(float)
+
+
 
      if 1 == 2:
         print("type(t)", type(t)) # pandas series
@@ -82,16 +90,47 @@ def arps_fit(DATE_OR_TIME, t, q, plot=None):
      np_cum_days = np.append(0, np_cum_days)
      np_cum_days = np_cum_days.astype(float)
 
+
      print("type(np_cum_days) np array of cumulative days", type(np_cum_days)) 
      print("np_cum_days")
      print(np_cum_days)
      print()
  
 
+  list_cum_days = np_cum_days.tolist() #########
 
+  np_q_rate = np.asarray(q_rate)
+  list_q_rate = np_q_rate.tolist()  ######
 
+  if WT_OR_STD == "STD":
+     np_cum_days_weighted = np_cum_days
+     np_q_rate_weighted = np_q_rate
+  else:   
+     list_cum_days_weighted = []
+     list_q_rate_weighted = []
+  
+     nItems = len(list_cum_days)
+     for i in range(nItems):
+        next_time = list_cum_days[i]
+        next_rate = list_q_rate[i]  
+        for j in range(i):
+           list_cum_days_weighted.append(next_time)
+           list_q_rate_weighted.append(next_rate)
+           
+    
+     np_q_rate_weighted = np.asarray(list_q_rate_weighted)
+     np_cum_days_weighted = np.asarray(list_cum_days_weighted)
+
+  if 1 == 2:
+     df_to_webbrowser("np_cum_days", np_cum_days)
+     df_to_webbrowser("np_cum_days_weighted", np_cum_days_weighted)
+
+     df_to_webbrowser("np_q_rate", np_q_rate)
+     df_to_webbrowser("np_q_rate_weighted", np_q_rate_weighted)
+ 
   # normalize the time and rate data
-  t_normalized = np_cum_days / max(np_cum_days)
+  
+  t_normalized = np_cum_days_weighted / max(np_cum_days_weighted)
 
   if 1 == 2:
      print("type(t_normalized)", type(t_normalized)) 
@@ -100,8 +139,9 @@ def arps_fit(DATE_OR_TIME, t, q, plot=None):
      print()
    
   
-  q_normalized = q / max(q)
-
+  #q_normalized = q_rate / max(q_rate)
+  q_normalized = np_q_rate_weighted / max(np_q_rate_weighted)
+ 
   if 1 == 2:
      print("type(q_normalized)", type(q_normalized)) 
      print("q_normalized")
@@ -119,8 +159,11 @@ def arps_fit(DATE_OR_TIME, t, q, plot=None):
   RMSE = rmse(q_normalized, qfit_normalized)
 
   # De-normalize qi and di
-  qi = qi * max(q)
-  di = di / max(np_cum_days)
+  #qi = qi * max(q_rate)
+  qi = qi * max(np_q_rate_weighted)
+  
+  #di = di / max(np_cum_days)
+  di = di / max(np_cum_days_weighted)
 
   if plot==True:
     # Print all parameters and RMSE
@@ -136,7 +179,7 @@ def arps_fit(DATE_OR_TIME, t, q, plot=None):
     # Plot data and hyperbolic curve
     plt.figure(figsize=(10,7))
 
-    plt.step(np_cum_days, q, color='blue', label="Data")
+    plt.step(np_cum_days, q_rate, color='blue', label="Data")
     plt.plot(tfit, qfit, color='red', label="Hyperbolic Curve")
     plt.title('Decline Curve Analysis', size=20, pad=15)
     plt.xlabel('Days')
@@ -147,7 +190,7 @@ def arps_fit(DATE_OR_TIME, t, q, plot=None):
     plt.grid()
     plt.show()
 
-  return qi, di, b, RMSE
+  return qi, di, b, RMSE, np_cum_days, np_cum_months, np_cum_years  # fix for DATE ...
 
 
 
