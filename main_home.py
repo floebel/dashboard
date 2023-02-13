@@ -26,7 +26,7 @@ def main():
     
     #image = Image.open("assets/monalisa-4893660_640.jpg")
     #image = Image.open("rocket.jpg")
-    image = mpimg.imread('rocket.jpg') 
+    image = mpimg.imread('oil_well.png') 
  
     st.image(image)
     #st.title("COVID-19 Dashboard")

@@ -7,6 +7,23 @@ import datetime
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 
+def fig_max_point(list_rate):
+
+   nMaxPoint = 0
+   nMaxVolume = 0
+   nPoints = len(list_rate)
+   for i in range(nPoints):
+      if i == 0:
+         nMaxPoint = 0
+         nMaxVolume = list_rate[i]
+      else:
+         next_volume = list_rate[i]
+         if next_volume > nMaxVolume:
+            nMaxPoint = i
+            nMaxVolume = next_volume
+   return nMaxPoint            
+            
+
   
 def hyperbolic(t, qi, di, b):
   """
@@ -148,6 +165,9 @@ def arps_fit(DATE_OR_TIME, WT_OR_STD, t, q_rate, plot=None):
      print(q_normalized)
      print()
  
+
+
+
   
 
   # fitting the data with the hyperbolic function

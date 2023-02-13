@@ -44,505 +44,9 @@ from pylab import figure, show, legend, ylabel, xlabel
 
 
 
-def oil_comparison_graph() : # ND_OR_LC, study_year, study_product):
-    
-   hhc_measured = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-
-   hhc_forecast = [41803, 28483, 21589, 17290, 14290, 12137, 10538, 9278, 8262, 7424, 6742, 6154, 5647, 5209, 4818]
-   pin_forecast = [48270, 36000, 29500, 25070, 21940, 19560, 17550, 15910, 14640, 13540, 12600, 11770, 11070, 10440, 9900]
-   hyp_forecast = [40929, 29468, 23373, 19428, 16620, 14504, 12847, 11513, 10416, 9499, 8721, 8054, 7476, 6970, 6525]
-         
-   forecast_year = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032]                
-
-   if 1 == 1: 
-      STD_OR_SPECIAL = "SPECIAL"
-      DAY_OR_MONTH = "YEAR"
-      study_state = "??"
-      #values = fit_hyperbolic ( hyp_forecast, forecast_year, ND_OR_LC, study_year, study_product, DAY_OR_MONTH, STD_OR_SPECIAL, study_state)    # call GEKKO
-      #values = fit_hyperbolic_one_phase ( hyp_forecast, forecast_year)    # call GEKKO
-
-      values = fit_hyperbolic_one_phase ( pin_forecast, forecast_year)  # FDL HYPERBOLIC   # call GEKKO
-
-      print()
-      print("values from fit_hyperbolic_one_phase")
-      print(values)
-      print()
-  
-      q_daily = values[0]
-      h_hyperbolic = values[1]
-      d_daily = values[2]
-      d_yearly = values[3]
-      cstr = "from oil_comparison_graph returned from GEKKO ONE PHASE ... q_daily = " + str(q_daily) + " h_hyperbolic = " + str(h_hyperbolic) + " d_yearly = " + str(d_yearly) + " d_daily = " + str(d_daily)
-      print(cstr)
-      input("Press ENTER to continue...")
-
-       
-   if 1 == 2:
-      study_state = "??"
-      #values = fit_hyperbolic_two_phase ( pin_forecast, forecast_year, ND_OR_LC, study_product, monthly_or_yearly, study_state ) # FDL HYPERBOLIC  # call GEKKO
-
-   
-      print()
-      print("values from fit_hyperbolic_two_phase")
-      print(values)
-      print()
-  
-      q_daily0 = values[0]  # max daily rate
-      q_daily1 = values[1]
-      q_daily2 = values[2]  
-      h_hyperbolic1 = values[3]
-      h_hyperbolic2 = values[4]
-      d_daily1 = values[5]
-      d_daily2 = values[6]
-      d_yearly1 = values[7]
-      d_yearly2 = values[8]
-      base = values[8]
-      cstr = "from oil_comparison_graph returned from GEKKO TWO PHASE... max daily rate = " + str(q_daily)
-      print(cstr)
-      cstr = "q_daily1 fracture = " + str(q_daily1) + " h_hyperbolic1 = " + str(h_hyperbolic1) + " d_yearly1 = " + str(d_yearly1) + " d_daily1 = " + str(d_daily1)
-      print(cstr)
-      cstr = "q_daily2 matrix = " + str(q_daily2) + " h_hyperbolic2 = " + str(h_hyperbolic2) + " d_yearly2 = " + str(d_yearly2) + " d_daily2 = " + str(d_daily2)
-      print(cstr)
-      cstr = "returned from GEKKO TWO PHASE ... two phase base = " + str(base) 
-      print(cstr)
-      raw_input("Press ENTER to continue...")
-
-   
-
-
-
-  
-   plt.figure(1)
-   cTitle = "Comparison of North Dakota Net Production Forecasts\n"
-   cTitle += "For Oil Production\n"
-   cTitle += "From HHC and Pinnacle\n"
-   #cTitle += "Using Both Linear Rate/Cumul Method and Hyperbolic Forecast Method"
-   plt.title(cTitle)
- 
-      
-      
-   #plt.plot(x, x + 0, linestyle='solid')
-   #plt.plot(x, x + 1, linestyle='dashed')
-   #plt.plot(x, x + 2, linestyle='dashdot')
-   #plt.plot(x, x + 3, linestyle='dotted');
-
-   # For short, you can use the following codes:
-   #plt.plot(x, x + 4, linestyle='-')  # solid
-   #plt.plot(x, x + 5, linestyle='--') # dashed
-   #plt.plot(x, x + 6, linestyle='-.') # dashdot
-   #plt.plot(x, x + 7, linestyle=':')  # dotted;
-   
-   #plt.plot(x, x + 0, '-g')  # solid green
-   #plt.plot(x, x + 1, '--c') # dashed cyan
-   #plt.plot(x, x + 2, '-.k') # dashdot black
-   #plt.plot(x, x + 3, ':r')  # dotted red;
-     
-   #the RGB (Red/Green/Blue) and CMYK (Cyan/Magenta/Yellow/blacK)  
-
-   # fix below - not same sizes ..........
-         
-  
-                
-
-   #plt.plot(actual_year, actual_production, color='red', linestyle='solid', label='Measured')
-         
-   plt.plot(forecast_year, hhc_forecast, color='black', linestyle='dashed', label='Reserve Report by HHC')
-   plt.plot(forecast_year, pin_forecast, color='green', linestyle='dotted', label='Reserve Report by Pinnacle')
-   #plt.plot(forecast_year, hyp_forecast, color='blue', linestyle='dashdot', label='Hyperbolic Fit Summing Each Reserve Year Added')
-
-   #list_linear_cum_vol_forecast.append(cum_vol_forecast)
-   #list_linear_rate_predict.append(daily_rate)
-   plt.legend(loc='upper right')
-
-   #  plt.legend([cLegend])
-
-      
-         
-   cX = "Forecast Year"
-   cY = "Forecasted Net Production Volume"
-   plt.xlabel(cX)
-   plt.ylabel(cY)
-   
-   plt.yscale('log')    # works
-   
-   plt.grid(True)
-   plt.show()
-
-
-
-if 1 == 2:
-   oil_comparison_graph()
-
-
-
-
-
-
-
-def historical_vs_forecast_comparison_graph_only_price(OIL_OR_GAS):
-
-   #OIL_OR_GAS = "OIL"
-   #OIL_OR_GAS = "GAS"
-   
-   #actual_yearM = [2017.0417, 2017.125, 2017.2083, 2017.2916, 2017.3749, 2017.4583, 2017.5415, 2017.6248, 2017.7081, 2017.7914, 2017.8747]
-   #actual_oil_volumeM = [6261, 6769, 8213, 7091, 7122, 6254, 5775, 5121, 4446, 4173, 4045 ]
-   #actual_gas_volumeM = [21766, 20049, 21683, 20753, 21061, 20457, 21209, 21268, 20627, 21278, 20356 ] 
-   actual_oil_volume = [21515/12, 23279/12, 22322/12, 23476/12, 24948/12, 25093/12, 24345/12, 26021/12, 26810/12, 26915/12, 25563/12, 22956/12, 22417/12]
-   actual_gas_volume = [36205/12, 37577/12, 35470/12, 33094/12, 33624/12, 34795/12, 31025/12, 30977/12, 32873/12, 25482/12, 33079/12, 26362/12, 20029/12]
-   actual_year = [2005.5, 2006.5, 2007.5, 2008.5, 2009.5, 2010.5, 2011.5, 2012.5, 2013.5, 2014.5, 2015.5, 2016.5, 2017.5]
-   
-   actual_gas_price = [8.86,   6.74,  6.98,  8.86,  3.95,  4.39,  4.00,  2.75,  3.73,  4.37,  2.61,  2.49, 2.96]
-   actual_gas10_price = [8.86*10,   6.74*10,  6.98*10,  8.86*10,  3.95*10,  4.39*10,  4.00*10,  2.75*10,  3.73*10,  4.37*10,  2.61*10,  2.49*10, 2.96*10]
- 
-   actual_oil_price = [56.44, 66.05, 72.29, 99.59, 61.69, 79.40, 95.05, 94.14, 97.93, 93.13, 48.75, 43.23, 50.91]                
-
-   #hhc_forecast = [41803, 28483, 21589, 17290, 14290, 12137, 10538, 9278, 8262, 7424, 6742, 6154, 5647, 5209, 4818]
-   #pin_forecast = [48270, 36000, 29500, 25070, 21940, 19560, 17550, 15910, 14640, 13540, 12600, 11770, 11070, 10440, 9900]
-   #hyp_forecast = [40929, 29468, 23373, 19428, 16620, 14504, 12847, 11513, 10416, 9499, 8721, 8054, 7476, 6970, 6525]
-         
-   hhc_oil_forecast = [20912/12, 18745/12, 16901/12, 15339/12, 13997/12, 12830/12, 11805/12, 10900/12, 10092/12, 9371/12, 8725/12, 8140/12, 7612/12, 7134/12, 6699/12]
-   hhc_gas_forecast = [21619/12, 18788/12, 16567/12, 14758/12, 13246/12, 11931/12, 10823/12, 9879/12, 9022/12, 8291/12, 7635/12, 7054/12, 6537/12, 6065/12, 5652/12]   
-   #pin_oil_forecast = [48270/12, 36000/12, 29500/12, 25070/12, 21940/12, 19560/12, 17550/12, 15910/12, 14640/12, 13540/12, 12600/12, 11770/12, 11070/12, 10440/12, 9900/12]
-   #pin_gas_forecast = [250020/12, 234010/12, 220530/12, 207340/12, 195950/12, 185490/12, 176270/12, 166740/12, 158270/12, 150300/12, 143150/12, 135620/12, 128880/12, 122490/12, 116750/12]
-
-   forecast_year = [2018.5, 2019.5, 2020.5, 2021.5, 2022.5, 2023.5, 2024.5, 2025.5, 2026.5, 2027.5, 2028.5, 2029.5, 2030.5, 2031.5, 2032.5]                
-
-   hhc_oil_forecastM = [1789, 1773, 1757, 1742, 1727, 1712, 1698, 1684, 1670, 1656, 1648, 1635, 1622, 1609, 1597]
-   hhc_gas_forecastM = [1874, 1852, 1830, 1809, 1788, 1768, 1749, 1731, 1712, 1695, 1677, 1660, 1644, 1628, 1612]
-   forecast_yearM = [2018.0417, 2018.125, 2018.2083, 2018.2916, 2018.3749, 2018.4582, 2018.5415, 2018.6248, 2018.7081, 2018.7914, 2018.8747, 2018.9580, 2019.0417, 2019.125, 2019.2083]                
-
-
-   if 1 == 1:
-
-      ONE_OR_TWO = "ONE"
-      #ONE_OR_TWO = "TWO"
-      #ONE_OR_TWO = "DOUBLE"
-
-      
-      #if ONE_OR_TWO == "DOUBLE":
-      #   fig = plt.figure()
-      #   f, axes = plt.subplots(2, 1)
-      #   axes[0].plot(
-      #   ay1 = fig.add_subplot(111)
-      #   ax1 = fig.add_subplot(111)
-      #   ax2 = ax1.twinx()
-      if ONE_OR_TWO == "xxxONE":
-         fig = plt.figure()   
-         ay1 = fig.add_subplot(111)
-         ax1 = fig.add_subplot(111)
-         ax2 = ax1.twinx() 
-      elif ONE_OR_TWO == "ONE":                # WORKS 
-         fig, ay1 = plt.subplots()
-      elif ONE_OR_TWO == "TWO":
-         plt.figure()    #TWO
-         ax1 = fig.add_subplot(111)
-      
-      #fig = plt.figure()
-      
-      #ax1 = fig.add_subplot(111)   # TWIN
-      
-      #ax2 = fig.add_subplot(111, sharex=ax1, frameon=False)
-      #ay1 = plt.subplots()
-      #fig, ax1 = plt.subplots()
-
-      ay1.set_yscale('log')
-
-      #ax2 = ax1.twinx()    # TWIN
-             
-      if OIL_OR_GAS == "OIL":
-         ay1.plot([10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120], [1,2,3,4,5,6,7,8,9,10,11,12])
-         ay1.set_yticks([10,20,30,40,50,60,70,80,90,100,110,120 ])
-         ay1.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
-         plt.ylim(10,120)
-         
-      elif OIL_OR_GAS == "GAS":
-         ay1.plot([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], [1,2,3,4,5,6,7,8,9,10,11,12])
-         ay1.set_yticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ])
-         ay1.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
-         plt.ylim(1, 12)    
 
  
-   elif 1 == 1:
-      plt.figure(1)
-
-      plt.xticks(np.arange(2005.0, 2033+1, 2.0))
-   
-      if OIL_OR_GAS == "OIL":
-         plt.yticks(np.arange(0, 120, 10))
-      elif OIL_OR_GAS == "GAS":
-         plt.yticks(np.arange(0, 12, 1))
-      
-      plt.yscale('log')    # works
-      
-   plt.xlim(2005, 2034)    
-   plt.xticks(np.arange(2005.0, 2033+1, 2.0))
-   
-   if OIL_OR_GAS == "OIL":
-      #cTitle = "\nHistory of WTI Oil Price ($/BBL)"
-      cTitle = "WTI Oil Price ($/BBL)\nAnd Adjusted Henry Hub Price ($/MMBTU * 10)\nVersus Production Year"
   
-   elif OIL_OR_GAS == "GAS":
-      cTitle = "\nHistory of Henry Hub Gas Price ($/MMBTU)"
-      
-   plt.title(cTitle)
-
-
-
-   #plt.plot(x, x + 0, linestyle='solid')
-   #plt.plot(x, x + 1, linestyle='dashed')
-   #plt.plot(x, x + 2, linestyle='dashdot')
-   #plt.plot(x, x + 3, linestyle='dotted');
-
-   # For short, you can use the following codes:
-   #plt.plot(x, x + 4, linestyle='-')  # solid
-   #plt.plot(x, x + 5, linestyle='--') # dashed
-   #plt.plot(x, x + 6, linestyle='-.') # dashdot
-   #plt.plot(x, x + 7, linestyle=':')  # dotted;
-   
-   #plt.plot(x, x + 0, '-g')  # solid green
-   #plt.plot(x, x + 1, '--c') # dashed cyan
-   #plt.plot(x, x + 2, '-.k') # dashdot black
-   #plt.plot(x, x + 3, ':r')  # dotted red;
-     
-   #the RGB (Red/Green/Blue) and CMYK (Cyan/Magenta/Yellow/blacK)  
-
-   # fix below - not same sizes ..........
-         
-  
-                
-
-   #plt.plot(actual_year, actual_production, color='red', linestyle='solid', label='Measured')
-   
-
-   if OIL_OR_GAS == "OIL":
-      plt.plot(actual_year, actual_oil_price, color='green', linestyle='solid', label='WTI Oil Price ($/BBL)')
-      plt.plot(actual_year, actual_gas10_price, color='red', linestyle='solid', label='Adjusted Henry Hub Price ($/MMBTU * 10)')
-   ##plt.plot(actual_yearM, actual_oil_volumeM, color='black', linestyle='dashed', label='Actual Monthly Net Oil BBL')
-
-      #ax1.plot(forecast_year, hhc_oil_forecast, color='green', linestyle='solid', label='TBC Forecast Average Monthly Net Oil BBL')
-      #ax1.plot(forecast_yearM, hhc_oil_forecastM, color='green', linestyle='dashed', label='TBC Forecast Monthly Net Oil BBL')
-      #plt.plot(forecast_year, pin_oil_forecast, color='blue', linestyle='dotted', label='Pinnacle Forecast Average Monthly Net Oil BBL')
-
-      #ax1.plot(actual_year, actual_oil_price, 'b-')
-      #ax12.set_ylabel('WTI Oil Price ($/BBL)', color='b')
-
-   elif OIL_OR_GAS == "GAS":
-      plt.plot(actual_year, actual_gas_price, color='black', linestyle='solid', label='Henry Hub Gas Price ($/MMBTU)')
-      #plt.plot(actual_yearM, actual_gas_volumeM, color='black', linestyle='dashed', label='Actual Monthly Net Gas MCF')
-
-      #ax1.plot(forecast_year, hhc_gas_forecast, color='green', linestyle='solid', label='TBC Forecast Average Monthly Net Gas MCF')
-      #ax1.plot(forecast_yearM, hhc_gas_forecastM, color='green', linestyle='dashed', label='TBC Forecast Monthly Net Gas MCF')
-  
-      #ax2.plot(actual_year, actual_gas_price, 'b-')
-      #ax2.set_ylabel('Henry Hub Gas Price ($/MMBTU)', color='b')
-     
-      #plt.plot(forecast_year, pin_gas_forecast, color='blue', linestyle='dotted', label='Pinnacle Forecast Average Monthly Net Gas MCF')
-
-   #ax2.set_ylabel('PRICE', color='r')
-   #ax2.tick_params('y', colors='r')
-    
-   #plt.plot(forecast_year, pin_forecast, color='green', linestyle='dotted', label='Reserve Report by Pinnacle')
-       
-   #plt.plot(forecast_year, hhc_forecast, color='black', linestyle='dashed', label='Reserve Report by HHC')
-   #plt.plot(forecast_year, pin_forecast, color='green', linestyle='dotted', label='Reserve Report by Pinnacle')
-   #plt.plot(forecast_year, hyp_forecast, color='blue', linestyle='dashdot', label='xxxxx')
-
-   #list_linear_cum_vol_forecast.append(cum_vol_forecast)
-   #list_linear_rate_predict.append(daily_rate)
-   plt.legend(loc='upper right')
-
-   #  plt.legend([cLegend])
-
-      
-   #cX = "Production Year or Forecast Year"
-      
-   cX = "Production Year"
-   if OIL_OR_GAS == "OIL":
-      #cY = "Average WTI Oil Price ($/BBL)"
-      cY = "WTI Oil Price or Adjusted Henry Hub Gas Price"
- 
-   elif OIL_OR_GAS == "GAS":
-      cY = "Average Henry Hub Gas Price ($/MMBTU)"
-      
-   plt.xlabel(cX)
-   plt.ylabel(cY)
-     
-   plt.grid(True)
-   
-   #fig.tight_layout()
-   
-   plt.show()
-
-if 1 == 2:
-   
-   historical_vs_forecast_comparison_graph_only_price("OIL")
-   historical_vs_forecast_comparison_graph_only_price("GAS")
-
-
-
-
-def cash_flow_forecast(any_option):
-
-             
-
-   #hhc_forecast = [41803, 28483, 21589, 17290, 14290, 12137, 10538, 9278, 8262, 7424, 6742, 6154, 5647, 5209, 4818]
-   #pin_forecast = [48270, 36000, 29500, 25070, 21940, 19560, 17550, 15910, 14640, 13540, 12600, 11770, 11070, 10440, 9900]
-   #hyp_forecast = [40929, 29468, 23373, 19428, 16620, 14504, 12847, 11513, 10416, 9499, 8721, 8054, 7476, 6970, 6525]
-         
-   base_forecast_0 = [1243, 1164, 1097, 1041, 993, 951, 913, 856, 804, 757, 714, 675, 640, 607, 577]
-   base_forecast_10 = [1182, 1006, 862, 744, 645, 561, 490, 417, 366, 305, 262, 225, 194, 167, 144]
-   
-   flat_forecast_0 = [1353, 1338, 1328, 1322, 1321, 1291, 1236, 1156, 1084, 1020, 962, 910, 862, 819, 778]
-   flat_forecast_10 = [1286, 1156, 1043, 944, 857, 762, 663, 563, 480, 411, 353, 303, 261, 225, 194]
-   
-   pin_forecast_0 = [1237, 1156, 1097, 1044, 1003, 968, 939, 885, 837, 794, 756, 718, 685, 654, 627]
-   pin_forecast_10 = [1177, 2175-1177, 3037-2175, 3783-3037, 4435-3783, 5006-4435, 5510-5006, 5941-5510, 6312-5941, 6632-6312, 6909-6632, 7149-6909, 7356-7149, 7536-7356, 7693-7536]
-   
- 
-   #pin_oil_forecast = [48270/12, 36000/12, 29500/12, 25070/12, 21940/12, 19560/12, 17550/12, 15910/12, 14640/12, 13540/12, 12600/12, 11770/12, 11070/12, 10440/12, 9900/12]
-   #pin_gas_forecast = [250020/12, 234010/12, 220530/12, 207340/12, 195950/12, 185490/12, 176270/12, 166740/12, 158270/12, 150300/12, 143150/12, 135620/12, 128880/12, 122490/12, 116750/12]
-
-   forecast_year = [2018.5, 2019.5, 2020.5, 2021.5, 2022.5, 2023.5, 2024.5, 2025.5, 2026.5, 2027.5, 2028.5, 2029.5, 2030.5, 2031.5, 2032.5]                
-
-   #hhc_oil_forecastM = [1789, 1773, 1757, 1742, 1727, 1712, 1698, 1684, 1670, 1656, 1648, 1635, 1622, 1609, 1597]
-   #hhc_gas_forecastM = [1874, 1852, 1830, 1809, 1788, 1768, 1749, 1731, 1712, 1695, 1677, 1660, 1644, 1628, 1612]
-   #forecast_yearM = [2018.0417, 2018.125, 2018.2083, 2018.2916, 2018.3749, 2018.4582, 2018.5415, 2018.6248, 2018.7081, 2018.7914, 2018.8747, 2018.9580, 2019.0417, 2019.125, 2019.2083]                
-
-
-  
-   if 1 == 1:
-      #plt.figure(1)
-
-      #fig1, ax1 = plt.subplots()
-      #ax2 = ax1.twinx()
-   
-      fig1, ay1 = plt.subplots()
-  
-      ay1.set_yscale('log')    
- 
-      if 1 == 1:
-         ay1.plot([125,250,375,500,625,750,875,1000,1125,1250,1375,1500], [1,2,3,4,5,6,7,8,9,10,11,12])
-         ay1.set_yticks([125,250,375,500,625,750,875,1000,1125,1250,1375,1500 ])
-         ay1.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
-         plt.ylim(125,1500)
-         
-      
- 
-   elif 1 == 1:
-      plt.figure(1)
-
-      plt.xticks(np.arange(2018.0, 2033+1, 1.0))
-   
-      if OIL_OR_GAS == "OIL":
-         plt.yticks(np.arange(0, 12000, 1000))
-      elif OIL_OR_GAS == "GAS":
-         plt.yticks(np.arange(0, 100000, 5000))
-      
-      plt.yscale('log')    # works
-      
-   plt.xlim(2018, 2034)    
-   plt.xticks(np.arange(2018.0, 2033+1, 1.0))
-   
-   cTitle = "\nUndiscounted and Discounted Cash Flow Comparison\n"
-   cTitle += "Of Expected and Optimistic Cases\n"
-   cTitle += "For THE BUFFALO COMPANY (TBC)\n"
-   plt.title(cTitle)
- 
-      
-      
-   #plt.plot(x, x + 0, linestyle='solid')
-   #plt.plot(x, x + 1, linestyle='dashed')
-   #plt.plot(x, x + 2, linestyle='dashdot')
-   #plt.plot(x, x + 3, linestyle='dotted');
-
-   # For short, you can use the following codes:
-   #plt.plot(x, x + 4, linestyle='-')  # solid
-   #plt.plot(x, x + 5, linestyle='--') # dashed
-   #plt.plot(x, x + 6, linestyle='-.') # dashdot
-   #plt.plot(x, x + 7, linestyle=':')  # dotted;
-   
-   #plt.plot(x, x + 0, '-g')  # solid green
-   #plt.plot(x, x + 1, '--c') # dashed cyan
-   #plt.plot(x, x + 2, '-.k') # dashdot black
-   #plt.plot(x, x + 3, ':r')  # dotted red;
-     
-   #the RGB (Red/Green/Blue) and CMYK (Cyan/Magenta/Yellow/blacK)  
-
-   # fix below - not same sizes ..........
-         
-  
-                
-
-   #plt.plot(actual_year, actual_production, color='red', linestyle='solid', label='Measured')
-   
-
-   if 1 == 1:
-      #plt.plot(actual_year, actual_oil_volume, color='black', linestyle='solid', label='Actual Average Monthly Net Oil BBL')
-      #plt.plot(actual_yearM, actual_oil_volumeM, color='black', linestyle='dashed', label='Actual Monthly Net Oil BBL')
-
-      plt.plot(forecast_year, base_forecast_0, color='green', linestyle='solid', label='Internal TBC Base Forecast Undiscounted Cash Flow (M$)')
-      plt.plot(forecast_year, base_forecast_10, color='blue', linestyle='solid', label='Internal TBC Base Forecast Discounted (10%) Cash Flow (M$)')
-      plt.plot(forecast_year, flat_forecast_0, color='green', linestyle='dashed', label='Internal TBC Optimistic Forecast Undiscounted Cash Flow (M$)')
-      plt.plot(forecast_year, flat_forecast_10, color='blue', linestyle='dashed', label='Internal TBC Optimistic Forecast Discounted (10%) Cash Flow (M$)')
-
-      plt.plot(forecast_year, pin_forecast_0, color='green', linestyle='dotted', label='Pinnacle TBC Base Forecast Undiscounted Cash Flow (M$)')
-      plt.plot(forecast_year, pin_forecast_10, color='blue', linestyle='dotted', label='Pinnacle TBC Base Forecast Discounted (10%) Cash Flow (M$)')
-
-      #plt.plot(forecast_yearM, hhc_oil_forecastM, color='green', linestyle='dashed', label='TBC Forecast Monthly Net Oil BBL')
-      #plt.plot(forecast_year, pin_oil_forecast, color='blue', linestyle='dotted', label='Pinnacle Forecast Average Monthly Net Oil BBL')
-      #plt.plot(forecast_year, hhc_oil_forecast_flat, color='blue', linestyle='dotted', label='TBC Optimistic Forecast Average Monthly Net Oil BBL')
-
-      #ax2.plot(actual_year, actual_oil_price, 'r.')
-
-   elif OIL_OR_GAS == "GAS":
-      plt.plot(actual_year, actual_gas_volume, color='black', linestyle='solid', label='Actual Average Monthly Net Gas MCF')
-      #plt.plot(actual_yearM, actual_gas_volumeM, color='black', linestyle='dashed', label='Actual Monthly Net Gas MCF')
-
-      plt.plot(forecast_year, hhc_gas_forecast, color='green', linestyle='solid', label='TBC Forecast Average Monthly Net Gas MCF')
-      plt.plot(forecast_yearM, hhc_gas_forecastM, color='green', linestyle='dashed', label='TBC Forecast Monthly Net Gas MCF')
-      plt.plot(forecast_year, hhc_gas_forecast_flat, color='blue', linestyle='dotted', label='TBC Optimistic Forecast Average Monthly Net Gas MCF')
-
-      #ax2.plot(actual_year, actual_gas_price, 'r.')
-          
-      #plt.plot(forecast_year, pin_gas_forecast, color='blue', linestyle='dotted', label='Pinnacle Forecast Average Monthly Net Gas MCF')
-
-   #ax2.set_ylabel('PRICE', color='r')
-   #ax2.tick_params('y', colors='r')
-    
-   #plt.plot(forecast_year, pin_forecast, color='green', linestyle='dotted', label='Reserve Report by Pinnacle')
-       
-   #plt.plot(forecast_year, hhc_forecast, color='black', linestyle='dashed', label='Reserve Report by HHC')
-   #plt.plot(forecast_year, pin_forecast, color='green', linestyle='dotted', label='Reserve Report by Pinnacle')
-   #plt.plot(forecast_year, hyp_forecast, color='blue', linestyle='dashdot', label='xxxxxxxxxx')
-
-   #list_linear_cum_vol_forecast.append(cum_vol_forecast)
-   #list_linear_rate_predict.append(daily_rate)
-   plt.legend(loc='lower left')
-
-   #  plt.legend([cLegend])
-
-      
-         
-   cX = "Forecast Year"
-   cY = "Annual Net Cash Flow (M$)"
-         
-   plt.xlabel(cX)
-   plt.ylabel(cY)
-     
-   plt.grid(True)
-   
-   #fig1.tight_layout()
-   
-   plt.show()
-
-if 1 == 2:
-   
-   cash_flow_forecast("UNDISCOUNTED")
-   #cash_flow_forecast("10_PERCENT")
-
-
-
-
 
 def query_rate_time_data():
    
@@ -1154,10 +658,19 @@ def fig_group_by(any_state):  ###################
    df = df_from_sqlite(any_state, cSQL)
 
    df["Ave Monthly Oil Per Well"] = df["OIL_SUM"] / df["OIL_PTS"]
-
    df["Ave Monthly Gas Per Well"] = df["GAS_SUM"] / df["GAS_PTS"]
 
-   list_drop = ["OIL_SUM", "GAS_SUM"] 
+   df["CUMUL_MONTHS"] = df["CUMUL_MONTHS"] + 1.0
+
+   df["CUMUL_YEARS"] = df["CUMUL_MONTHS"] / 12.0
+   df["CUMUL_DAYS"] = df["CUMUL_YEARS"] * 365.25
+  
+   df["BOPD"] = df["Ave Monthly Oil Per Well"] / 30.4375
+   df["MCFD"] = df["Ave Monthly Gas Per Well"] / 30.4375
+
+   
+
+   list_drop = ["CUMUL_YEARS", "CUMUL_MONTHS", "OIL_SUM", "GAS_SUM", "Ave Monthly Oil Per Well", "Ave Monthly Gas Per Well"] 
    df = df.drop(list_drop, axis=1)
 
    df.to_csv("normalized_monthly_production.csv", index=False)
@@ -1166,13 +679,55 @@ def fig_group_by(any_state):  ###################
       st.subheader("df _groupby")
       st.dataframe(df)  
    return df
+
+
   
 
+if 1 == 2:
+   study_state = "??"
+   #values = fit_hyperbolic_two_phase ( pin_forecast, forecast_year, ND_OR_LC, study_product, monthly_or_yearly, study_state ) # FDL HYPERBOLIC  # call GEKKO
+  
+   print()
+   print("values from fit_hyperbolic_two_phase")
+   print(values)
+   print()
+  
+   q_daily0 = values[0]  # max daily rate
+   q_daily1 = values[1]
+   q_daily2 = values[2]  
+   h_hyperbolic1 = values[3]
+   h_hyperbolic2 = values[4]
+   d_daily1 = values[5]
+   d_daily2 = values[6]
+   d_yearly1 = values[7]
+   d_yearly2 = values[8]
+   base = values[8]
+   cstr = "from oil_comparison_graph returned from GEKKO TWO PHASE... max daily rate = " + str(q_daily)
+   print(cstr)
+   cstr = "q_daily1 fracture = " + str(q_daily1) + " h_hyperbolic1 = " + str(h_hyperbolic1) + " d_yearly1 = " + str(d_yearly1) + " d_daily1 = " + str(d_daily1)
+   print(cstr)
+   cstr = "q_daily2 matrix = " + str(q_daily2) + " h_hyperbolic2 = " + str(h_hyperbolic2) + " d_yearly2 = " + str(d_yearly2) + " d_daily2 = " + str(d_daily2)
+   print(cstr)
+   cstr = "returned from GEKKO TWO PHASE ... two phase base = " + str(base) 
+   print(cstr)
+    
 
 
-
-
-
+def hyperbolic_equation(t, qi, b, di):
+   """
+   Hyperbolic decline curve equation
+   Arguments:
+       t: Float. Time since the well first came online, can be in various units 
+       (days, months, etc) so long as they are consistent.
+       qi: Float. Initial production rate when well first came online.
+       b: Float. Hyperbolic decline constant
+       di: Float. Nominal decline rate at time t=0
+   Output: 
+       Returns q, or the expected production rate at time t. Float.
+   """
+   #return qi/((1.0+b*di*t)**(1.0/b))
+   return  qi/np.power((1+b*di*t), 1./b)
+   
 
 
 def main():
@@ -1182,6 +737,9 @@ def main():
    #    This app is maintained by Fulton Loebel
    #    """
    #)
+
+
+   
 
    if 1 == 2:
       st.subheader("Distinct Query")
@@ -1197,42 +755,44 @@ def main():
    
    df = fig_group_by(any_state)
 
+   st.dataframe(df)
+  
+   list_days = df["CUMUL_DAYS"].values.tolist()
 
-   #hhc_forecast = [41803, 28483, 21589, 17290, 14290, 12137, 10538, 9278, 8262, 7424, 6742, 6154, 5647, 5209, 4818]
-   pin_forecast = [48270, 36000, 29500, 25070, 21940, 19560, 17550, 15910, 14640, 13540, 12600, 11770, 11070, 10440, 9900]
-   #hyp_forecast = [40929, 29468, 23373, 19428, 16620, 14504, 12847, 11513, 10416, 9499, 8721, 8054, 7476, 6970, 6525]
-         
-   forecast_year = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032]                
+   list_oil_rates = df['BOPD'].values.tolist()
+   list_gas_rates = df['MCFD'].values.tolist()
+   
+   #OIL_OR_GAS = "OIL"
+   #values = fit_hyperbolic_two_phase ( "OIL", list_oil_rates, list_days)  
+   #values = fit_hyperbolic_two_phase ( "GAS", list_gas_rates, list_days)  
 
-   #if 1 == 1: 
-   #   STD_OR_SPECIAL = "SPECIAL"
-   #   DAY_OR_MONTH = "YEAR"
-   #   study_state = "??"
-   #   #values = fit_hyperbolic ( hyp_forecast, forecast_year, ND_OR_LC, study_year, study_product, DAY_OR_MONTH, STD_OR_SPECIAL, study_state)    # call GEKKO
-   #   #values = fit_hyperbolic_one_phase ( hyp_forecast, forecast_year)    # call GEKKO
 
-   values = fit_hyperbolic_one_phase ( pin_forecast, forecast_year)  # FDL HYPERBOLIC   # call GEKKO
+   if 1 == 2:  
+      values = fit_hyperbolic_one_phase ( "OIL", list_oil_rates, list_days)  
+
+      values = fit_hyperbolic_one_phase ( "GAS", list_gas_rates, list_days)  
 
    #print()
    #print("values from fit_hyperbolic_one_phase")
    #print(values)
    #print()
-  
-   q_daily = values[0]
-   cstr = "q_daily = " + str(q_daily)
-   st.write(cstr)
-   h_hyperbolic = values[1]
-   cstr = "h_hyperbolic = " + str(h_hyperbolic)
-   st.write(cstr)  
-   d_daily = values[2]
-   cstr = "d_daily = " + str(d_daily)
-   st.write(cstr)  
-   d_yearly = values[3]
-   cstr = "d_yearly = " + str(d_yearly)
-   st.write(cstr)  
-   #cstr = "from oil_comparison_graph returned from GEKKO ONE PHASE ... q_daily = " + str(q_daily) + " h_hyperbolic = " + str(h_hyperbolic) + " d_yearly = " + str(d_yearly) + " d_daily = " + str(d_daily)
-   #print(cstr)
-   #input("Press ENTER to continue...")
+
+   if 1 == 2: 
+      q_daily = values[0]
+      cstr = "q_daily = " + str(q_daily)
+      st.write(cstr)
+      h_hyperbolic = values[1]
+      cstr = "h_hyperbolic = " + str(h_hyperbolic)
+      st.write(cstr)  
+      d_daily = values[2]
+      cstr = "d_daily = " + str(d_daily)
+      st.write(cstr)  
+      d_yearly = values[3]
+      cstr = "d_yearly = " + str(d_yearly)
+      st.write(cstr)  
+      #cstr = "from oil_comparison_graph returned from GEKKO ONE PHASE ... q_daily = " + str(q_daily) + " h_hyperbolic = " + str(h_hyperbolic) + " d_yearly = " + str(d_yearly) + " d_daily = " + str(d_daily)
+      #print(cstr)
+      #input("Press ENTER to continue...")
 
    
    #df = fig_df_lease()
@@ -1252,43 +812,422 @@ def main():
 
    #df_county_summary = database_to_df(oENGINE, cSQL)
    #df_county_summary = df_county_summary.head(20)
-     
-   st.dataframe(df)
 
-   series_time = df['CUMUL_MONTHS']
 
-   OIL_OR_GAS = "GAS"  ######################
+   if 1 == 1:   # SCIPY OPTIMIZE CURVE_FIT
 
-   if OIL_OR_GAS == "OIL":
-      series_rate = df['Ave Monthly Oil Per Well']
-   elif OIL_OR_GAS == "GAS":
-      series_rate = df['Ave Monthly Gas Per Well']    
-      
-   # q = df['Ave Monthly Oil Per Well']
-
-   qi_wt, di_wt, b_wt, RMSE_wt, np_cum_days_wt, np_cum_months_wt, np_cum_years_wt = arps_fit("TIME", "WT", series_time, series_rate, plot=False)
-   cstr = "qi_wt = " + str(qi_wt)
-   st.write(cstr)
-   cstr = "di_wt = " + str(di_wt)
-   st.write(cstr)
-   cstr = "b_wt = " + str(b_wt)
-   st.write(cstr)
-   cstr = "RMSE_wt = " + str(RMSE_wt)
-   st.write(cstr)
-
-   qi_std, di_std, b_std, RMSE_std, np_cum_days_std, np_cum_months_std, np_cum_years_std = arps_fit("TIME", "STD", series_time, series_rate, plot=False)
-   cstr = "qi_std = " + str(qi_std)
-   st.write(cstr)
-   cstr = "di_std = " + str(di_std)
-   st.write(cstr)
-   cstr = "b_std = " + str(b_std)
-   st.write(cstr)
-   cstr = "RMSE_std = " + str(RMSE_std)
-   st.write(cstr)
+      #list_rates = list_gas_rates
          
+      list_time = []
+      list_rate = []
+
+      OIL_OR_GAS = "GAS"  ######################
+
+      if OIL_OR_GAS == "OIL":
+         nPoints = len(list_days)
+         nMaxPoint = fig_max_point(list_oil_rates) 
+         max_daily_rate = list_oil_rates[nMaxPoint]   
+      elif OIL_OR_GAS == "GAS":
+         nPoints = len(list_days)
+         nMaxPoint = fig_max_point(list_gas_rates) 
+         max_daily_rate = list_gas_rates[nMaxPoint]
+
+      cstr = "max daily rate = " + str(max_daily_rate) + " at point " + str(nMaxPoint)
+      print(cstr)   
+      st.write(cstr)         
+
+      for i in range(nPoints):
+         if i < nMaxPoint:  # only analyze points on or after nMaxPoint
+            fdl = 1
+         else:   
+            next_time = list_days[i]
+            if OIL_OR_GAS == "OIL":
+               next_rate = list_oil_rates[i]
+            elif OIL_OR_GAS == "GAS":
+               next_rate = list_gas_rates[i]   
+               
+            #if i == 0:
+            #   if list_rates[1] > list_rates[0]:
+            #      next_rate = raw_rate_data[1]
+            #if next_rate == 0.0 and raw_rate_data[i-1] > 0.0:
+            #   next_rate = raw_rate_data[i-1] * 0.10
+            #else:
+            #   next_rate = 0.10
+            #if next_rate > 0.0:   
+            list_time.append(next_time)
+            list_rate.append(next_rate)
+
+
+        
+
+
+      #Hyperbolic curve fit 
+      qi_min = max_daily_rate * 0.95
+      qi_max = max_daily_rate * 1.05
+      b_min = 0.0
+      b_max = 3.0
+      di_min = 0.0
+      di_max = 99.9999
+   
+      opt_hyp, cov_hyp = curve_fit(hyperbolic_equation,\
+                                   list_time,\
+                                   list_rate,\
+                                   bounds=((qi_min, b_min, di_min), (qi_max, b_max, di_max)) )
+
+      opt_hyp = np.round(opt_hyp, decimals=5)
+
+      print('Hyperbolic Fit Curve-fitted Variables: qi='+str(opt_hyp[0])+', b='+str(opt_hyp[1])+', di='+str(opt_hyp[2]))
+      #input("wait")
+      q_daily = opt_hyp[0]
+      cstr = "Predicted Initial Rate Qi = " + str(q_daily)
+      st.write(cstr)
       
+      h_hyperbolic  = opt_hyp[1] 
+      cstr = "Predicted Hyperbolic bi = " + str(h_hyperbolic)
+      st.write(cstr)
+
+      d_daily = opt_hyp[2]
+      cstr = "Predicted Daily Di = " + str(d_daily)
+      st.write(cstr)
+
+      #def hyperbolic_equation(t, qi, b, di):
+
+
+   if 1 == 2:
+      
+      #def arps_hyperbolic_rate(qi, di, b, t):
+      # return qi / ((1.0 + b * di * t) ** (1.0 / b))
+      rate_at_60_days = hyperbolic_equation(q_daily, d_daily, h_hyperbolic, 60)
+      cstr = "rate at 60 days = " + str(rate_at_60_days)
+      st.write(cstr) 
+ 
+      rate_at_120_days = hyperbolic_equation(q_daily, d_daily, h_hyperbolic, 120)
+      cstr = "rate at 120 days = " + str(rate_at_120_days)
+      st.write(cstr) 
+  
+      rate_at_180_days = hyperbolic_equation(q_daily, d_daily, h_hyperbolic, 180)
+      cstr = "rate at 180 days = " + str(rate_at_180_days)  
+      st.write(cstr) 
+
+      rate_at_360_days = hyperbolic_equation(q_daily, d_daily, h_hyperbolic, 360)
+      cstr = "rate at 360 days = " + str(rate_at_360_days)  
+      st.write(cstr)
+
+      rate_at_720_days = hyperbolic_equation(q_daily, d_daily, h_hyperbolic, 720)
+      cstr = "rate at 720 days = " + str(rate_at_720_days)  
+      st.write(cstr)    
+
+
+
+      
+
+      if 1 == 2:
+         #import matplotlib.pyplot as plt
+         plt.figure(figsize=(6, 4))
+         #x_data = b
+         #y_data = a_x_b
+         #popt, pcov = curve_fit(duong, list_time, list_prod, bounds=([0, 0, 0],[10000, 2.99, 2.99]))
+         #popt, pcov = curve_fit(duong, list_time, list_prod)
+
+         #print('This is the best fit we found for well ', popt) # print Coefficients per well
+         plt.scatter(list_time, list_rate, label='Normalized Production Data')
+
+         min_days = 1
+         max_days = 2100
+         np_xdata = np.linspace(min_days, max_days, nPoints)  # define data to predict 
+         #q = duong(list_time, popt[0], popt[1], popt[2])
+         if 1 == 2:
+            q = hyperbolic_equation(list_time, popt_hyp[0], popt_hyp[1], popt_hyp[2])
+            plt.plot(np_xdata, q, '-', color = "red", label="Fitted Function" )
+      
+         plt.yscale('log') 
+   
+         #q = duong(time, popt[0], popt[1], popt[2]) 
+         #plt.plot(list_time, duong(list_time, popt[0], popt[1], popt[2]), label='Fitted function')
+         plt.legend(loc='best')
+         #plt.show()
+         st.pyplot() 
+
+         #input("wait")   
+
 
    if 1 == 1:
+
+      st.set_option('deprecation.showPyplotGlobalUse', False) 
+      fig, ax = plt.subplots(figsize=(10,7))
+      # fig, ax = plt.subplots() 
+      #ax.set_figure(figsize=(10,7))
+      #ax.step(series_time, series_rate, color='blue')
+      #ax.step(np_cum_days_std, series_rate, color='blue', label="Normalized Production Data")      
+
+      if OIL_OR_GAS == "OIL":
+         #ax.step(xm, ym, color='green', label="Normalized Oil Rate BOPD")
+         ax.step(list_time, list_rate, color='green', label="Normalized Oil Rate BOPD")
+    
+      elif OIL_OR_GAS == "GAS":
+         #ax.step(xm, ym, color='red', label="Normalized Gas Rate MCFD")
+         ax.step(list_time, list_rate, color='red', label="Normalized Gas Rate MCFD")
+ 
+      #list_predict_days = []
+      #list_predict_years = []
+      #list_actual_rate = []
+      #list_predict_rate = []
+      #list_predict_cumul = []
+
+
+
+      min_time = min(list_time)
+      max_time = max(list_time)
+
+      np_time = np.array(list_time)
+      np_rate = np.array(list_rate)
+
+      nPlot = len(list_time)  
+
+      #plt.step(list_time, list_rate, color='green', label="Normalized Oil Rate BOPD")
+      np_xdata = np.linspace(min_time, max_time, nPlot)   # define data to predict 
+      q = hyperbolic_equation(np_time, opt_hyp[0], opt_hyp[1], opt_hyp[2]) 
+      #plt.plot(np_xdata, q, '-', color = "blue", label="Hyperbolic Fit" )
+      ax.plot(np_xdata, q, color='blue', linestyle = 'dashed', label = "Hyperbolic Fit")
+      plt.yscale('log') 
+
+
+      if 1 == 2:
+         #ax.plot(list_predict_years, list_predict_rate, color='blue', linestyle = 'dashed', label = "Predicted Rate From Hyperbolic Eqn")
+         ax.plot(list_predict_days, list_predict_rate, color='blue', linestyle = 'dashed', label = "Predicted Rate From Hyperbolic Eqn")
+    
+
+      if 1 == 2:
+         ax.plot(xm, yp, color='blue', linestyle = 'dashed', label = "Predicted Rate From Hyperbolic Eqn")
+
+      #plt.plot(students, marks, color = 'green',
+      #linestyle = 'solid', marker = 'o',
+      #markerfacecolor = 'red', markersize = 12)
+      
+      #ax.plot(xm, yp, color='red', label="Hyperbolic Curve Fit Weighted More Recent")
+          
+      #ax.plot(tfit_std, qfit_std, color='orange', label="Hyperbolic Curve Fit Not Weighted")
+
+      any_title = 'Normalized ' + OIL_OR_GAS + ' Production Rate vs Time Plot'
+      ax.set_title(any_title, size=16, weight='bold' ,pad=15)
+   
+      ax.set_xlabel('Normalized Producing Years', size=12, weight='bold')
+
+      if OIL_OR_GAS == "OIL":   
+         ax.set_ylabel('Oil Rate BOPD Normalized to 4500 Foot Lateral', size=12, weight='bold')
+      elif OIL_OR_GAS == "GAS":   
+         ax.set_ylabel('Gas Rate MCFD Normalized to 4500 Foot Lateral', size=12, weight='bold')    
+      
+      #ax.set_yscale('log')
+      #plt.semilogy()
+      #ax.set_xlim(min(series_time), max(series_time))
+      #ax.set_ylim(ymin=0)
+      #ax.set_ylabel('Cost'))
+      #ax.set_xlim(0.0, max(np_cum_days_std) * 1.50)
+      #ax.set_xlim(0.0, max(np_cum_days_std))
+  
+      #ax.set_ylim(ymin=0)
+
+
+      ax.set_yscale('log')
+
+      plt.grid(visible=True, which='major', color='gray', linestyle='-')
+      plt.grid(visible=True, which='minor', color='gray', linestyle='--')
+
+      # Create the second legend and add the artist manually.
+      #from matplotlib.legend import Legend
+      #leg = Legend(ax, lines[2:], ['line C', 'line D'], loc='lower right', frameon=True)
+      #leg = Legend(ax, ['line C', 'line D'], loc='lower right', frameon=True)
+      #ax.add_artist(leg)
+      
+      # Create the second legend and add the first manually.
+      #leg2 = ax.legend(['',''], ['line C', 'line D'], loc='lower right', frameon=True)
+      #ax.add_artist(leg2)
+      #any_cum_volume = fig_hyperbolic_cumulative_volume (q_daily, h_hyperbolic, d_daily, any_forecast_days)
+
+      if 1 == 2:
+         any_cumul_01 = fig_hyperbolic_cumulative_volume (q_daily, h_hyperbolic, d_daily, 1.0 * 365.25)
+         any_cumul_05 = fig_hyperbolic_cumulative_volume (q_daily, h_hyperbolic, d_daily, 5.0 * 365.25)
+         any_cumul_10 = fig_hyperbolic_cumulative_volume (q_daily, h_hyperbolic, d_daily, 10.0 * 365.25)
+         any_cumul_20 = fig_hyperbolic_cumulative_volume (q_daily, h_hyperbolic, d_daily, 20.0 * 365.25)
+         any_cumul_30 = fig_hyperbolic_cumulative_volume (q_daily, h_hyperbolic, d_daily, 30.0 * 365.25)
+         text_cumul  = "EUR  1 Year = " + str(round(any_cumul_01,0))
+         text_cumul += "\nEUR  5 Year = " + str(round(any_cumul_05,0))
+         text_cumul += "\nEUR 10 Year = " + str(round(any_cumul_10,0))
+         text_cumul += "\nEUR 20 Year = " + str(round(any_cumul_20,0))
+         text_cumul += "\nEUR 30 Year = " + str(round(any_cumul_30,0))
+
+
+         from matplotlib.offsetbox import AnchoredText
+         # anchored_text = AnchoredText(text_cumul, loc=4, prop={'weight': 'bold', 'fontsize': 12, 'color': 'black'},
+         anchored_text = AnchoredText(text_cumul, loc=4, prop={'fontsize': 12, 'color': 'black'},
+                                       **{'frameon': True})
+         ax.add_artist(anchored_text)
+
+
+      #print("max_daily_rate = ", max_daily_rate)
+
+
+
+      if 1 == 2:
+         
+         ax.set_yticks([0.1, 0.3, 1, 3, 10, 30, 100, 300, 1000, 3000, 10000])
+         ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+         ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+         #ax.get_yaxis().set_major_formatter(FormatStrFormatter('%.2f')) 
+         ax.set_ylim(0.1, 10000)
+         
+
+      elif max_daily_rate >= 5000:
+         ax.set_yticks([0.1, 0.3, 1, 3, 10, 30, 50, 100, 300, 1000, 3000, 10000])
+         ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+         ax.get_yaxis().set_major_formatter(FormatStrFormatter('%.1f')) 
+         ax.set_ylim(0.1, 10000)
+         
+      elif max_daily_rate >= 2000:
+         ax.set_yticks([0.03, 0.10, 0.3, 1, 3, 10, 30, 100, 300, 1000, 3000, 10000])
+         ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+         ax.get_yaxis().set_major_formatter(FormatStrFormatter('%.2f')) 
+         ax.set_ylim(0.03, 10000)
+
+      elif max_daily_rate >= 1000:
+         ax.set_yticks([0.01, 0.03, 0.1, .3, 1, 3, 10, 30, 100, 300, 1000, 3000])
+         ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+         ax.get_yaxis.set_major_formatter(FormatStrFormatter('%.2f')) 
+         ax.set_ylim(0.01, 3000)
+
+      elif max_daily_rate >= 500:
+         ax.set_yticks([0.01, 0.03, .1, .3, 1, 3, 10, 30, 100, 300, 1000, 3000])
+         ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+         ax.get_yaxis().set_major_formatter(FormatStrFormatter('%.2f')) 
+         ax.set_ylim(0.01, 3000)
+
+      elif max_daily_rate >= 200:
+         ax.set_yticks([0.003, 0.01, .03, 0.10, 0.30, 1, 3, 10, 30, 100, 300, 1000])
+         ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+         ax.get_yaxis().set_major_formatter(FormatStrFormatter('%.3f')) 
+         ax.set_ylim(0.003, 1000)        
+            
+      elif max_daily_rate >= 100:
+         ax.set_yticks([0.001, 0.003, 0.01, 0.03, 0.10, 0.30, 1, 3, 10, 30, 100, 300])
+         ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+         ax.get_yaxis().set_major_formatter(FormatStrFormatter('%.3f')) 
+         ax.set_ylim(0.001, 300)
+
+      elif max_daily_rate >= 50:
+         ax.set_yticks([0.001, 0.003, 0.01, 0.03, 0.10, 0.30, 1, 3, 10, 30, 100, 300])
+         ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+         ax.get_yaxis().set_major_formatter(FormatStrFormatter('%.3f')) 
+         ax.set_ylim(0.001, 300)
+
+      elif max_daily_rate >= 20:
+         ax.set_yticks([0.001, 0.003, 0.01, 0.03, 0.10, 0.30, 1, 3, 10, 30, 100])
+         ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+         ax.get_yaxis().set_major_formatter(FormatStrFormatter('%.3f')) 
+         ax.set_ylim(0.001, 100)        
+                  
+               
+      elif 1 == 1:
+         fdl = 1   
+      elif OIL_OR_GAS == "OIL":
+         #ax.plot([10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120], [1,2,3,4,5,6,7,8,9,10,11,12])
+         ax.set_yticks([10,20,30,40,50,60,70,80,90,100,110,120 ])
+         ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+         ax.set_ylim(10,120)
+         
+      elif OIL_OR_GAS == "GAS":
+         #ax.plot([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], [1,2,3,4,5,6,7,8,9,10,11,12])
+         ax.set_yticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ])
+         ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+         ax.set_ylim(1, 12)    
+
+
+
+      #plt.xticks(x, weight = 'bold')
+      plt.xticks(weight = 'bold')
+      plt.yticks(weight = 'bold')
+
+      #elif 1 == 1:
+      #plt.figure(1)
+
+      #plt.xticks(np.arange(2005.0, 2033+1, 2.0))
+   
+      #if OIL_OR_GAS == "OIL":
+      #   ax_set_yticks(np.arange(0, 120, 10))
+      #elif OIL_OR_GAS == "GAS":
+      #   ax.set_yticks(np.arange(0, 12, 1))
+      
+      #plt.yscale('log')    # works
+    
+
+      # Plot data and hyperbolic curve
+      #plt.figure(figsize=(10,7))
+
+      #plt.title('Decline Curve Analysis', size=20, pad=15)
+      #plt.xlabel('Days')
+      #plt.ylabel('Rate (SCF/d)')
+
+      plt.legend()
+      #plt.grid()
+      #plt.show()
+     
+      plt.grid(True)
+      plt.tight_layout() 
+      #plt.show()
+      st.pyplot()
+
+
+      #input("wait line 1118")
+
+
+
+
+
+
+
+
+
+
+
+
+
+   
+   if 1 == 2:
+      
+      
+      st.dataframe(df)
+
+      series_time = df['CUMUL_DAYS']
+
+      OIL_OR_GAS = "GAS"  ######################
+
+      if OIL_OR_GAS == "OIL":
+         series_rate = df['BOPD']
+      elif OIL_OR_GAS == "GAS":
+         series_rate = df['MCFD']    
+      
+      # q = df['Ave Monthly Oil Per Well']
+
+      qi_wt, di_wt, b_wt, RMSE_wt, np_cum_days_wt, np_cum_months_wt, np_cum_years_wt = arps_fit("TIME", "WT", series_time, series_rate, plot=False)
+      cstr = "qi_wt = " + str(qi_wt)
+      st.write(cstr)
+      cstr = "di_wt = " + str(di_wt)
+      st.write(cstr)
+      cstr = "b_wt = " + str(b_wt)
+      st.write(cstr)
+      cstr = "RMSE_wt = " + str(RMSE_wt)
+      st.write(cstr)
+
+      qi_std, di_std, b_std, RMSE_std, np_cum_days_std, np_cum_months_std, np_cum_years_std = arps_fit("TIME", "STD", series_time, series_rate, plot=False)
+      cstr = "qi_std = " + str(qi_std)
+      st.write(cstr)
+      cstr = "di_std = " + str(di_std)
+      st.write(cstr)
+      cstr = "b_std = " + str(b_std)
+      st.write(cstr)
+      cstr = "RMSE_std = " + str(RMSE_std)
+      st.write(cstr)
+          
       st.set_option('deprecation.showPyplotGlobalUse', False) 
       fig, ax = plt.subplots(figsize=(10,7))
       # fig, ax = plt.subplots() 

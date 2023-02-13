@@ -221,7 +221,7 @@ import numpy as np
 import os
 #import os.path
 #import os.remove
-
+import matplotlib.pyplot as plt
 import sqlite3
 import sqlalchemy
 #from sqlalchemy.ext.automap import automap_base
@@ -230,7 +230,368 @@ from sqlalchemy import create_engine, func, inspect
 #Create engine 
 
 
+from scipy.optimize import curve_fit
 
+def EUR(self):
+        qi = float(self.par_qi.get())
+        di = float(self.par_di.get())
+        b = float(self.par_b.get())
+        q_lowest_for_EUR = 1.0
+        for t in range(1000000):
+            if self.func_hyp(t, qi, di, b)<=q_lowest_for_EUR:
+                return self.func_cum_hyp(t, qi, di, b)
+            
+
+
+
+def error(self):
+   diff = (self.q_model2-self.valid_q)**2
+   return (diff.mean())**0.5
+
+def middle_t(self, t):
+   b = np.append(np.array([0]), np.array(t))
+   return 0.5*(b[:-1]+b[1:])
+
+
+# From Fekete ydata is ycumul ...
+def func_cum_hyp(self, t, qi, di, b):
+   return (qi/((1-b)*di))*(1-(1+b*di*t)**(1-(1/b)))
+    
+def duong_2(t, qi, a, m):
+   q = qi*t**(-m)*np.exp((a)/(1-m)*(t**(1-m))-1)
+   return q
+
+def duong(t, qi, m, a):
+
+    q = (qi * np.power(t,-m))* np.exp((a / (1 - m)) * ((np.power(t,(1-m))) - 1))
+    return q
+
+
+def hyperbolic_equation(t, qi, b, di):
+   """
+   Hyperbolic decline curve equation
+   Arguments:
+       t: Float. Time since the well first came online, can be in various units 
+       (days, months, etc) so long as they are consistent.
+       qi: Float. Initial production rate when well first came online.
+       b: Float. Hyperbolic decline constant
+       di: Float. Nominal decline rate at time t=0
+   Output: 
+       Returns q, or the expected production rate at time t. Float.
+   """
+   #return qi/((1.0+b*di*t)**(1.0/b))
+   return  qi/np.power((1+b*di*t), 1./b)
+
+
+def exponential_equation(t, qi, di):
+   """
+   Exponential decline curve equation
+   Arguments:
+       t: Float. Time since the well first came online, can be in various units 
+       (days, months, etc) so long as they are consistent.
+       qi: Float. Initial production rate when well first came online.
+       di: Float. Nominal decline rate (constant)
+   Output: 
+       Returns q, or the expected production rate at time t. Float.
+   """
+   return qi*np.exp(-di*t)
+
+	
+def harmonic_decline(t, q_i, d):
+   """  
+   Description: The harmonic decline function returns values
+   for the given parameters.
+   Input: t, q_i, d
+   Output: Array of values
+   """
+   return q_i*((1+d*t)**(-1))
+
+
+		
+def hyp2exp(t, q_i, b, d, beta):
+   """
+   Description: The hyperbolic to exponential decline function
+   returns values for the given parameters.
+   Input: t, q_i, d, b, beta
+   Output: Array of values
+   """
+   return q_i * ( ( ((1-beta)**b)*np.exp(-d*t) ) / ( 1- (beta*np.exp(-d*t)) )**b )
+
+if 1 == 2:
+   popt, pcov = curve_fit(func_hyp, xdata=t, ydata=q, check_finite=True, 
+                          method=method, loss=loss,
+                          bounds=([lo_qi, lo_di, lo_b], [up_qi, up_di, up_b]))
+   popt = np.round(popt, decimals=5)
+
+
+list_time = [ 30, 60, 90,120,150,180,210]
+list_rate = [100, 90, 80, 70, 60, 50, 40]
+nPoints = len(list_time)      
+
+
+if 1 == 1:
+
+   #Hyperbolic curve fit 
+   qi_min = 100.0 * 0.95
+   qi_max = 100 * 1.05
+   b_min = 0.001
+   b_max = 3.0
+   di_min = 0.00001
+   di_max = 99.9999
+
+   np_time = np.array(list_time)
+   np_rate = np.array(list_rate)
+ 
+   
+   opt_hyp, cov_hyp=curve_fit(hyperbolic_equation,\
+                              np_time,\
+                              np_rate,\
+                              bounds=((qi_min, b_min, di_min), (qi_max, b_max, di_max)) )
+
+   print('Hyperbolic Fit Curve-fitted Variables: qi='+str(opt_hyp[0])+', b='+str(opt_hyp[1])+', di='+str(opt_hyp[2]))
+   #input("wait")
+
+
+   if 1 == 1:
+           
+      q_daily = opt_hyp[0]
+      cstr = "Initial Rate Qi = " + str(q_daily)
+      print(cstr)
+      
+      h_hyperbolic  = opt_hyp[1] 
+      cstr = "Hyperbolic bi = " + str(h_hyperbolic)
+      print(cstr)
+
+      d_daily = opt_hyp[2]
+      cstr = "Daily Di = " + str(d_daily)
+      print(cstr)
+
+
+
+
+   min_time = min(list_time)
+   max_time = max(list_time)
+
+   np_time = np.array(list_time)
+   np_rate = np.array(list_rate)
+
+
+   if 1 == 1:
+      
+      #def arps_hyperbolic_rate(qi, di, b, t):
+      # return qi / ((1.0 + b * di * t) ** (1.0 / b))
+      rate_at_60_days = hyperbolic_equation(q_daily, d_daily, h_hyperbolic, 60)
+      cstr = "rate at 60 days = " + str(rate_at_60_days)
+      print(cstr) 
+ 
+      rate_at_120_days = hyperbolic_equation(q_daily, d_daily, h_hyperbolic, 120)
+      cstr = "rate at 120 days = " + str(rate_at_120_days)
+      print(cstr) 
+  
+      rate_at_180_days = hyperbolic_equation(q_daily, d_daily, h_hyperbolic, 180)
+      cstr = "rate at 180 days = " + str(rate_at_180_days)  
+      print(cstr) 
+
+      rate_at_360_days = hyperbolic_equation(q_daily, d_daily, h_hyperbolic, 360)
+      cstr = "rate at 360 days = " + str(rate_at_360_days)  
+      print(cstr)
+
+      rate_at_720_days = hyperbolic_equation(q_daily, d_daily, h_hyperbolic, 720)
+      cstr = "rate at 720 days = " + str(rate_at_720_days)  
+      print(cstr)    
+
+
+
+   
+    
+   plt.step(np_time, np_rate, color='green', label="Normalized Oil Rate BOPD")
+   np_xdata = np.linspace(min_time, max_time, nPoints)   # define data to predict 
+   q = hyperbolic_equation(np_time, opt_hyp[0], opt_hyp[1], opt_hyp[2]) 
+   plt.plot(np_xdata, q, '-', color = "red", label="Hyperbolic Fit" )
+   plt.yscale('log') 
+   
+   #q = duong(time, popt[0], popt[1], popt[2]) 
+   #plt.plot(list_time, duong(list_time, popt[0], popt[1], popt[2]), label='Fitted function')
+   plt.legend(loc='best')
+   plt.show()
+
+   input("wait")    
+
+
+
+if 1 == 2:
+        
+   #you need to specify the lower bound of each point in the first array-like followed
+   #by the upper bound of each point in the second array-like, like this: 
+
+   #duong curve fit
+   qi_min = 70.0
+   qi_max = 130.0
+   m_min = -99.99
+   m_max = 99.99  
+   a_min = -99.99
+   a_max = 99.9999   
+
+   
+   
+   opt_duo, cov_duo = curve_fit(duong,\
+                                list_time,\
+                                list_rate,\
+                                bounds=((qi_min, m_min, a_min), (qi_max, m_max, a_max)) )
+
+   cstr  = 'Duong Curve-fitted Variables: '
+   cstr += 'qi='+ str(opt_duo[0]) + ' m=' + str(opt_duo[1]) + ' a=' + str(opt_duo[2])  
+   print(cstr)
+
+   plt.step(list_time, list_rate, color='green', label="Normalized Oil Rate BOPD")
+   np_xdata = np.linspace(30, 200, nPoints)   # define data to predict 
+   q = duong(list_time, opt_duo[0], opt_duo[1], opt_duo[2]) 
+   plt.plot(np_xdata, q, '-', color = "red", label="Fitted Function" )
+   plt.yscale('log') 
+   
+   #q = duong(time, popt[0], popt[1], popt[2]) 
+   #plt.plot(list_time, duong(list_time, popt[0], popt[1], popt[2]), label='Fitted function')
+   plt.legend(loc='best')
+   plt.show()
+
+   input("wait")
+
+
+
+
+   #Hyperbolic to exponential curve fit
+   qi_min = 70.0
+   qi_max = 130.0
+   b_min = -5.0
+   b_max = 5.0  
+   di_min = -99.99
+   di_max = 99.9999   
+   beta_min = -99.99
+   beta_max = 99.99
+  
+   
+   opt_h2e, cov_h2e = curve_fit(hyp2exp,\
+                                [30, 60, 90, 120, 150, 180, 210],\
+                                [100, 90, 80, 70,  60,  50,  40],\
+                                bounds=((qi_min, b_min, di_min, beta_min), (qi_max, b_max, di_max, beta_max)) )
+
+   cstr  = 'Hyperbolic To Exponential Fit Curve-fitted Variables: '
+   cstr += 'qi='+ str(opt_h2e[0]) + ' b=' + str(opt_h2e[1]) + ' di=' + str(opt_h2e[2]) + ' beta=' + str(opt_h2e[3]) 
+   print(cstr)
+  
+
+   input("wait")
+
+   t = np.array([30, 60, 90, 120, 150, 180, 210])
+   q_i = 104.854385
+   d = 0.0075693749941
+   b = -4.99999
+   beta = 0.1492341166545108
+   np_results = hyp2exp(t, q_i, d, b, beta)
+   #,np.array([98.41857853,96.87345001,95.36336546])).all()
+   print(np_results)
+   input("wait")
+
+
+if 1 == 2:
+   
+   #Exponential curve fit
+   qi_min = 70.0
+   qi_max = 110.0
+   di_min = 0.0
+   di_max = 99.9999   
+   popt_exp, pcov_exp=curve_fit(exponential_equation,\
+                                [30, 60, 90, 120],\
+                                [100, 90, 80, 70],\
+                                bounds=((qi_min, di_min), (qi_max, di_max)) )
+                                
+
+   print('Exponential Fit Curve-fitted Variables: qi='+str(popt_exp[0])+', di='+str(popt_exp[1]))
+   input("wait")
+
+
+
+
+
+if 1 == 2:
+   from scipy.optimize import curve_fit
+   from scipy import special
+   import numpy as np
+   df = pd.read_csv("normalized_monthly_production.csv", header=0)   # e^(a * b)
+   nPoints = len(df)
+
+   list_time = df["CUMUL_YEARS"].values.tolist()
+   list_prod = df["MCFD"].values.tolist()
+
+   fit = np.poly1d(np.polyfit(list_time, list_prod, 4))
+   plt.plot(list_time, list_prod, '.', label='Data')
+   plt.plot(list_time, fit(list_time), label='Fit')
+   plt.yscale('log') 
+   plt.legend()
+   plt.show()
+
+   
+   #e_exp_a_x_b = [426.0938, 259.2896, 166.8042, 80.9248]
+   # a * b
+   #a_x_b = np.log(e_exp_a_x_b)
+   # b
+   #b = np.array([50,300,600,1000])
+
+   def gaussian_fun(x, a, b):
+      y_res = a*np.exp(-1*b*x**2)
+      return y_res
+
+   params, cov = curve_fit(gaussian_fun, list_time, list_prod)
+   fitA = params[0]
+   fitB = params[1]
+   fity = Gaussian_fun(list_time, fitA, fitB)
+   plt.plot(list_time, list_prod, '*', label='data')
+   plt.plot(list_time, fity, '-', label='fit')
+   plt.legend()
+   plt.yscale('log') 
+   plt.show()
+   
+
+   def erf(x, a, b, c, d):
+    return d + 0.5*c*(1 + special.erf(a*(x-b)))
+
+   def func(x, a, b, c):
+      return a * np.exp(-b * x) + c
+
+   def duong(t, qi, m, a):
+      q = (qi * np.power(t,-m))* np.exp((a / (1 - m)) * ((np.power(t,(1-m))) - 1))
+      return q
+
+
+   perf, pecov = curve_fit(erf, list_time, list_prod, p0=(0.5,0,40,-20))
+   plt.plot(list_time, list_prod, 'o', label='Data')
+   #plt.plot(x, func(x, *popt),'-',label='Fit')
+   plt.plot(list_time, erf(list_time, *perf), '--', label='erf fit')
+   plt.legend()
+   plt.show()
+   
+   #def fun(x, a_slope, b_intercept):
+   #   return a_slope * x + b_intercept
+
+   #import matplotlib.pyplot as plt
+   plt.figure(figsize=(6, 4))
+   #x_data = b
+   #y_data = a_x_b
+   popt, pcov = curve_fit(duong, list_time, list_prod, bounds=([0, 0, 0],[10000, 2.99, 2.99]))
+   #popt, pcov = curve_fit(duong, list_time, list_prod)
+
+   print('This is the best fit we found for well ', popt) # print Coefficients per well
+   plt.scatter(list_time, list_prod, label='Data')
+
+   np_xdata = np.linspace(1, 10, nPoints)  # define data to predict 
+   q = duong(list_time, popt[0], popt[1], popt[2]) 
+   plt.plot(np_xdata, q, '-', color = "red", label="Fitted Function" )
+   plt.yscale('log') 
+   
+   #q = duong(time, popt[0], popt[1], popt[2]) 
+   #plt.plot(list_time, duong(list_time, popt[0], popt[1], popt[2]), label='Fitted function')
+   plt.legend(loc='best')
+   plt.show()
 
     
 

@@ -1,5 +1,7 @@
 
 
+import streamlit as st
+
 # one phase and two phase hyperbolic fitting
 # uses gekko
 
@@ -18,6 +20,9 @@ import scipy as sp
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib import style
+import matplotlib
+from matplotlib.ticker import FormatStrFormatter
+
 #from matplotlib.ticker import MultipleLocator
 #from matplotlib import pyplot
 #import random
@@ -27,35 +32,181 @@ from matplotlib import style
 
 #import csv, pyodbc
 
+import math
+
+
+def arps_hyperbolic_rate(qi, di, b, t):
+    return qi / ((1.0 + b * di * t) ** (1.0 / b))
+
+
+def arps_hyperbolic_cumulative(qi, q, di, b, t):
+    return ((qi ** b) / (di * (1.0 - b))) ** (qi ** (1.0 - b) - q ** (1.0 - b))
+
+
+def arps_exponential_rate(qi, di, b):
+    return qi * math.e(-di)
+
+
+def arps_exponential_cumulative(qi, q, di, b, t):
+    return qi / di * (1 - math.e ** (-di * t))
+
+
+def rate_at_time_t(
+    nominal_monthly_decline,
+    initial_rate,
+    prior_interval_rate,
+    b_factor,
+    b_factor_adj,
+    Dmin_monthly,
+    standard_time,
+    ):
+    if (
+        nominal_monthly_decline * (prior_interval_rate / initial_rate) ** b_factor
+        >= Dmin_monthly
+        ):
+        return initial_rate * (
+            (1.0 + b_factor_adj * nominal_monthly_decline * standard_time)
+            ** (-1.0 / b_factor_adj)
+        )
+    else:
+        return prior_interval_rate * math.e ** (-Dmin_monthly)
+
+
+def cumulative_at_time_t(
+    nominal_monthly_decline,
+    initial_rate,
+    prior_interval_rate,
+    b_factor,
+    b_factor_adj,
+    Dmin_monthly,
+    standard_time,
+    prior_standard_time,
+    prior_cum_production,
+):
+    if (
+        nominal_monthly_decline * (prior_interval_rate / initial_rate) ** b_factor
+        >= Dmin_monthly
+    ):
+        return (initial_rate / (nominal_monthly_decline * (b_factor_adj - 1.0))) * (
+            (
+                (1 + b_factor_adj * nominal_monthly_decline * standard_time)
+                ** (1 - (1 / b_factor_adj))
+            )
+            - 1.0
+        )
+    else:
+        return (prior_interval_rate / Dmin_monthly) * (
+            1 - (math.e ** (-Dmin_monthly * (standard_time - prior_standard_time)))
+        ) + prior_cum_production
+
+
+def nominal_decline_annual(
+    nominal_annual_decline, prior_interval_rate, initial_rate, b_factor, Dmin_annual
+    ):
+
+    if (
+        nominal_annual_decline * (prior_interval_rate / initial_rate) ** b_factor
+        >= Dmin_annual
+    ):
+        return nominal_annual_decline * (prior_interval_rate / initial_rate) ** b_factor
+    else:
+        return nominal_annual_decline
+
+
+def effective_decline_annual(nominal_annual_decline):
+    return 1 - math.e ** (-nominal_annual_decline)
+
 
 
 def fig_superposition_rate():
    return ""
 
 
+def fig_max_point(list_rate):
+
+   nMaxPoint = 0
+   nMaxVolume = 0
+   nPoints = len(list_rate)
+   for i in range(nPoints):
+      if i == 0:
+         nMaxPoint = 0
+         nMaxVolume = list_rate[i]
+      else:
+         next_volume = list_rate[i]
+         if next_volume > nMaxVolume:
+            nMaxPoint = i
+            nMaxVolume = next_volume
+   return nMaxPoint            
+            
+
                                                                           
-def fit_hyperbolic_one_phase ( rate_data, time_data):
+def fit_hyperbolic_one_phase ( OIL_OR_GAS, raw_rate_data, raw_time_data):
 
    aa = 1
-   
-
+ 
    # smooth ........
+
+   nMaxPoint = fig_max_point(raw_rate_data)
    
+   time_data = []
+   rate_data = []
+   nPoints = len(raw_rate_data)
+   #nSplit = nPoints + 1 # int(nPoints * 0.90)
+   
+   for i in range(nPoints):
+      if i < nMaxPoint:  # only analyze points on or after nMaxPoint
+         fdl = 1
+      else:   
+         next_time = raw_time_data[i]
+         next_rate = raw_rate_data[i]
+         if i == 0:
+            if raw_rate_data[1] > raw_rate_data[0]:
+               next_rate = raw_rate_data[1]
+         #if next_rate == 0.0 and raw_rate_data[i-1] > 0.0:
+         #   next_rate = raw_rate_data[i-1] * 0.10
+         #else:
+         #   next_rate = 0.10
+         if next_rate > 0.0:   
+            time_data.append(next_time)
+            rate_data.append(next_rate)
+
+
+   #max_daily_rate = gekko_rate_data[0]
+   gekko_max_daily_rate = raw_rate_data[nMaxPoint]
+
+   #if raw_rate_data[1] > raw_rate_data[0]:
+   #   raw_max_daily_rate = raw_rate_data[1]    
+
+   cstr = "max daily rate = " + str(gekko_max_daily_rate) + " at point " + str(nMaxPoint)
+   print(cstr)   
+   st.write(cstr)
+
    
    if 1 == 1:   # DAY_OR_MONTH == "DAY":
       gekko_rate_data = rate_data
       gekko_time_data = time_data
-      max_daily_rate = gekko_rate_data[0]
-      cstr = "max daily rate = " + str(max_daily_rate)
-      print(cstr)
-      gekko_time_data = time_data
-   elif monthly_or_yearly == "YEAR":
+
+      #max_daily_rate = gekko_rate_data[0]
+      #gekko_max_daily_rate = gekko_rate_data[0]
+
+      #if gekko_rate_data[1] > gekko_rate_data[0]:
+      #   gekko_max_daily_rate = gekko_rate_data[1]    
+
+      #cstr = "one phase gekko max daily rate = " + str(gekko_max_daily_rate)
+      #print(cstr)
+      #st.write(cstr)
+
+
+        
+      
+   elif monthly_or_yearly == "xxxYEAR":
       gekko_rate_data = []
       gekko_time_data = []
       data_points = len(rate_data)
       for i in range(data_points):
          if i == 0: 
             any_cum_days = i + (365.25/2.)     # 0 = 365/2    1 = 1 + 365/2
+            
          elif 1 == 1:
              any_cum_days += 365.25
     
@@ -64,14 +215,14 @@ def fit_hyperbolic_one_phase ( rate_data, time_data):
          any_daily_volume = any_annual_volume / 365.25
          gekko_rate_data.append(any_daily_volume)       
       max_daily_rate = gekko_rate_data[0]           #   fix to use max function .....
-      cstr = "max daily rate = " + str(max_daily_rate)
+      cstr = "one phase max daily rate = " + str(max_daily_rate)
       print(cstr)
 
       print(gekko_time_data)
-      input("Press ENTER to continue...")
+      #input("Press ENTER to continue...")
       
       print(gekko_rate_data)
-      input("Press ENTER to continue...")
+      #input("Press ENTER to continue...")
 
       # fix for MONTH .....
 
@@ -84,12 +235,33 @@ def fit_hyperbolic_one_phase ( rate_data, time_data):
    m = GEKKO()
    
    if 1 == 1:   # STD_OR_SPECIAL == "SPECIAL":
-       gekko_q_daily = m.FV(lb=max_daily_rate*0.60,ub=max_daily_rate*1.40)    # q_daily
-       
-   if 1 == 1:   # STD_OR_SPECIAL == "SPECIAL":
-      gekko_h_hyperbolic = m.FV(lb=0.01,ub=2.1)
+       #gekko_q_daily = m.FV(lb=max_daily_rate*0.60,ub=max_daily_rate*1.40)    # q_daily
+       #gekko_q_daily = m.FV(lb=gekko_max_daily_rate*0.40,ub=gekko_max_daily_rate*5.00)    # q_daily
+       gekko_q_daily = m.FV(lb=gekko_max_daily_rate*0.950,ub=gekko_max_daily_rate*1.05)    # q_daily
+
+
+   if 1 == 1:
+      gekko_h_hyperbolic = m.FV(lb=1.49,ub=1.51)
      
-   gekko_d_daily = m.FV(lb=0.0,ub=0.2)                                    # d_daily
+   elif OIL_OR_GAS == "OIL":   # STD_OR_SPECIAL == "SPECIAL":
+      #gekko_h_hyperbolic = m.FV(lb=0.01,ub=2.1)
+      #gekko_h_hyperbolic = m.FV(lb=0.50,ub=4.5)
+      #gekko_h_hyperbolic = m.FV(lb=0.001,ub=3.0)
+      gekko_h_hyperbolic = m.FV(lb=0.05,ub=2.5)
+   elif OIL_OR_GAS == "GAS":   # STD_OR_SPECIAL == "SPECIAL":
+      #gekko_h_hyperbolic = m.FV(lb=0.01,ub=2.1)
+      #gekko_h_hyperbolic = m.FV(lb=0.50,ub=4.5)
+      #gekko_h_hyperbolic = m.FV(lb=0.001,ub=3.0)
+      gekko_h_hyperbolic = m.FV(lb=0.05,ub=2.5)
+  
+
+      
+  
+  
+   
+   #gekko_d_daily = m.FV(lb=0.0,ub=0.5)                                    # d_daily
+   gekko_d_daily = m.FV(lb=0.0,ub=99.9999)                                # d_daily
+     
    #gekko_d_yearly = m.FV(lb=0.0,ub=99.999999)                            # d_yearly
  
    #d = m.FV(lb=-100.0,ub=100.0)
@@ -116,7 +288,10 @@ def fit_hyperbolic_one_phase ( rate_data, time_data):
 
    # D_DAILY = 1 - (( 100.0 - D_YEARLY ) / 100.0) ^ (1/365.00)
 
-   m.Obj(((yp-ym)/ym)**2)
+   if 1 == 1:
+      m.Obj(((yp-ym)/ym)**2)
+   else:   
+      m.Obj(((yp-ym)/ym)**1)
 
    # Options
    gekko_q_daily.STATUS = 1
@@ -135,16 +310,242 @@ def fit_hyperbolic_one_phase ( rate_data, time_data):
    h_hyperbolic = gekko_h_hyperbolic.value[0]
    d_daily = gekko_d_daily.value[0]
    #d_yearly = gekko_d_yearly.value[0]
+
+   cstr = "d_daily from gekko = " + str(d_daily)
+   st.write(cstr)
+
+
+   #def arps_hyperbolic_rate(qi, di, b, t):
+   # return qi / ((1.0 + b * di * t) ** (1.0 / b))
+   rate_at_60_days = 30.4375 * arps_hyperbolic_rate(q_daily, d_daily, h_hyperbolic, 60)
+   cstr = "rate at 60 days = " + str(rate_at_60_days)
+   st.write(cstr) 
  
+   rate_at_120_days = 30.4375 * arps_hyperbolic_rate(q_daily, d_daily, h_hyperbolic, 120)
+   cstr = "rate at 120 days = " + str(rate_at_120_days)
+   st.write(cstr) 
+  
+   rate_at_180_days = 30.4375 * arps_hyperbolic_rate(q_daily, d_daily, h_hyperbolic, 180)
+   cstr = "rate at 180 days = " + str(rate_at_180_days)  
+   st.write(cstr) 
+
+   rate_at_360_days = 30.4375 * arps_hyperbolic_rate(q_daily, d_daily, h_hyperbolic, 360)
+   cstr = "rate at 360 days = " + str(rate_at_360_days)  
+   st.write(cstr)
+
+   rate_at_720_days = 30.4375 * arps_hyperbolic_rate(q_daily, d_daily, h_hyperbolic, 720)
+   cstr = "rate at 720 days = " + str(rate_at_720_days)  
+   st.write(cstr)    
+
+   if 1 == 2:
+      gekko_d_yearly_nominal = d_daily # ???
+      gekko_d_yearly_adjusted = (1.0 - gekko_d_yearly_nominal ) ** (1./365.25)   
+      gekko_d_daily = 1 - gekko_d_yearly_adjusted   
+      cstr = "gekko_d_yearly_nominal = " + str(gekko_d_yearly_nominal)
+      st.write(cstr)
+      cstr = "gekko_d_yearly_adjusted = " + str(gekko_d_yearly_adjusted)
+      st.write(cstr)
+      cstr = "gekko_d_daily = " + str(gekko_d_daily)
+      st.write(cstr)
+      
+
+   if 1 == 2:  
+      d_yearly_percent = d_daily  # * 100.0
+      d_daily_from_d_yearly = 1.0 - ((100.0 - d_yearly_percent)/100.0) ** (1.0/365.25)
+      d_daily_from_d_yearly = round(d_daily_from_d_yearly,6)
+      cstr = "d_daily from d_yearly = " + str(d_daily_from_d_yearly)
+      st.write(cstr)
+
+      d_daily = d_daily_from_d_yearly # FIX ######## 
+
+   if 1 == 2:  # calculate EUR at various times ...
+
+      list_predict_days = []
+      list_predict_years = []
+      list_predict_years_plus_one = []
+      list_actual_rate = []
+      list_predict_rate = []
+      list_predict_cumul = []
+   
+      #def fit_hyperbolic_one_phase ( OIL_OR_GAS, raw_rate_data, raw_time_data):
+      #nMonths = 360 # months
+      nMonths = 12 # months
+  
+      for i in range(nMonths):
+         next_month = i + 1
+         next_year = next_month * 0.083333333    
+         next_day = next_year * 365.25
+       
+         list_predict_days.append(next_day)
+         list_predict_years.append(next_year)
+         list_predict_years_plus_one.append(next_year + 1)
+          
+         #list_actual_rate.append(next_rate)   # BOPD or MCFD
+
+         #any_predict_rate = fig_hyperbolic_q_at_time_t (q_daily, h_hyperbolic, d_daily, next_day)  # rate per day at time t (days)
+         any_predict_rate = fig_hyperbolic_q_at_time_t (q_daily, h_hyperbolic, d_daily, next_year)  # rate per day at time t (days)
+         cstr = "rate at year " + str(next_year) + " is " + str(any_predict_rate)
+         st.write(cstr)
+         #any_q_at_time_t2 = fig_hyperbolic_q_at_time_t (q_daily, h_hyperbolic, d_daily, time_days + 0.5)
+
+         #any_predict_rate = q_daily / ( 1.0 + h_hyperbolic * d_daily * next_days ) ** (1.0 / h_hyperbolic)      
+
+         list_predict_rate.append(any_predict_rate)   # prediction of rate from time 0 only including test data
+
+         # estimate cumulative volume from hyperbolic fit
+         #any_cumul = fig_hyperbolic_cumulative_volume (q_daily, h_hyperbolic, d_daily, next_day)
+         any_cumul = fig_hyperbolic_cumulative_volume (q_daily, h_hyperbolic, d_daily_from_d_yearly, next_day)
+         cstr = "cumul at year " + str(next_year) + " is " + str(any_cumul)
+         st.write(cstr)
+  
+         list_predict_cumul.append(any_cumul)   # prediction of CUM VOLUME from time 0 only including test data
+
+         print()
+         
+         print("list_predict_years")
+         print(list_predict_years)
+         print()
+
+         print("list_predict_days")
+         print(list_predict_days)
+         print()
+
+         print("list_predict_rate")
+         print(list_predict_rate)
+         print()
+
+         #print("list_actual_rate")
+         #print(list_actual_rate)
+         #print()
+           
+  
+  
+
+
+
+
+   if 1 == 1:
+
+      list_predict_days = []
+      list_predict_years = []
+      #list_predict_years_plus_one = []
+      list_actual_rate = []
+      list_predict_rate = []
+      list_predict_cumul = []
+   
+      #def fit_hyperbolic_one_phase ( OIL_OR_GAS, raw_rate_data, raw_time_data):
+      nPoints = len(raw_rate_data)
+      nPointsMultiple = nPoints * 3
+      for i in range(nPointsMultiple):
+         next_days = 30.4375 * (i + 1)  
+         #next_years = (i + 1) * 0.083333333 #raw_time_data[i]
+         #next_days = next_years * 365.25
+         #next_rate = raw_rate_data[i]
+
+         list_predict_days.append(next_days)
+         #list_predict_years.append(next_years)
+         #list_predict_years_plus_one.append(next_years + 1)
+          
+         #list_actual_rate.append(next_rate)   # BOPD or MCFD
+
+         any_predict_rate = 30.4375 * arps_hyperbolic_rate(q_daily, d_daily, h_hyperbolic, next_days)
+
+         #any_predict_rate = 1000.0 * fig_hyperbolic_q_at_time_t (q_daily, h_hyperbolic, d_daily, next_days)  # rate per day at time t (days)
+         #any_predict_rate = fig_hyperbolic_q_at_time_t (q_daily, h_hyperbolic, d_daily, next_years)  # rate per day at time t (days)
+
+         #any_q_at_time_t2 = fig_hyperbolic_q_at_time_t (q_daily, h_hyperbolic, d_daily, time_days + 0.5)
+
+         #any_predict_rate = q_daily / ( 1.0 + h_hyperbolic * d_daily * next_days ) ** (1.0 / h_hyperbolic)      
+         list_predict_rate.append(any_predict_rate)   # prediction of rate from time 0 only including test data
+
+
+         # estimate cumulative volume from hyperbolic fit
+         any_cumul_1 = fig_hyperbolic_cumulative_volume (q_daily, h_hyperbolic, d_daily, next_days - 15.21875)
+         any_cumul_2 = fig_hyperbolic_cumulative_volume (q_daily, h_hyperbolic, d_daily, next_days + 15.21875)
+
+         #any_predict_rate = (any_cumul_2 - any_cumul_1) / 30.4375
+         
+         if 1 == 2:
+            list_predict_rate.append(any_predict_rate)   # prediction of rate from time 0 only including test data
+
+         any_cumul   = fig_hyperbolic_cumulative_volume (q_daily, h_hyperbolic, d_daily, next_days)
+
+         #any_cumul = fig_hyperbolic_cumulative_volume (q_daily, h_hyperbolic, d_daily, next_years)
+  
+         list_predict_cumul.append(any_cumul)   # prediction of CUM VOLUME from time 0 only including test data
+
+         print()
+         
+         print("list_predict_years")
+         print(list_predict_years)
+         print()
+
+         print("list_predict_days")
+         print(list_predict_days)
+         print()
+
+         print("list_predict_rate")
+         print(list_predict_rate)
+         print()
+
+         print("list_predict_cumul")
+         print(list_predict_cumul)
+         print()
+           
+  
+  
+
+         # compare to rate vs cumul data ...
+
+
+
+  
+
+         
+
+   if 1 == 2:
+
+         #list_hours_forecast = []
+         #  list_x_forecast = []
+         list_y_forecast = []       # hyperbolic rate forecast
+
+         forecast_rows = int(1 * 12 * 30.32)    # forecast for 1 years by day
+         #forecast_rows = int(40 * 12)           # forecast for 40 years by month
+         #forecast_rows = int(40 * 12 / 4)       # forecast for 40 years by quarter
+         for i in range(forecast_rows):
+            any_forecast_days = int(i * 30.42 * 365.25)       # daily
+            #any_forecast_days = int(i * 30.42)       # monthly
+            #any_forecast_days = int(i * (365.25/4))   # quarterly 
+            #any_x_forecast = any_forecast_days
+            list_days_forecast.append(any_forecast_days)   # days from time 0 out to 40 years
+
+            any_y_forecast = q_daily / ( 1.0 + h_hyperbolic * d_daily * any_forecast_days ) ** (1.0/h_hyperbolic)      
+            list_y_forecast.append(any_y_forecast)   # forecast of Y from time 0 out to 40 years
+
+            # estimate cumulative volume from hyperbolic fit
+            any_cum_volume = fig_hyperbolic_cumulative_volume (q_daily, h_hyperbolic, d_daily, any_forecast_days)
+            list_hyperbolic_cum_vol_forecast.append(any_cum_volume)   # prediction of CUM VOLUME from time 0 only including forecast data
+
+
+
+
+
  
+
+   if OIL_OR_GAS == "OIL":
+      st.write("OIL Analysis of Normalized Production Data")
+   elif OIL_OR_GAS == "GAS":
+      st.write("GAS Analysis of Normalized Production Data")    
+      
    c1 = "q_daily = " + str(q_daily)
+   st.write(c1)
    #print (c1)
 
    c2 = "h_hyperbolic = " + str(h_hyperbolic)
-   #print (c2)
+   st.write(c2)
 
    c3 = "d_daily = " + str(d_daily)
-   #print (c3)
+   st.write(c3)
 
    #c4 = "d_yearly = " + str(d_yearly)
 
@@ -156,12 +557,22 @@ def fit_hyperbolic_one_phase ( rate_data, time_data):
  
    # now calculate d_yearly from d_daily
 
-   values = fig_d_yearly_nominal (d_daily)     # call GEKKO
-   d_yearly = 100.0 * values[0]   # as a percent
-
-   c4 = "d_yearly (percent) = " + str(d_yearly)
+   if 1 == 2:  
+      #d_yearly_percent = d_daily * 100.0
    
+      d_daily_from_d_yearly = 1.0 - ((100.0 - d_yearly_percent)/100.0) ** (1.0/365.25)
+      d_daily_from_d_yearly = round(d_daily_from_d_yearly,6)
+      cstr = "d_daily from d_yearly = " + str(d_daily_from_d_yearly)
+      st.write(cstr)
 
+   if 1 == 2:
+      values = fig_d_yearly_nominal(d_daily)     # call GEKKO
+      d_yearly = 100.0 * values[0]   # as a percent
+
+      c4 = "d_yearly (percent) = " + str(d_yearly)
+      print (c4)
+  
+   d_yearly = 0.0  # FIX ###########################################
    
    #print('d: ', d.value[0])
 
@@ -174,34 +585,1044 @@ def fit_hyperbolic_one_phase ( rate_data, time_data):
 
    r2 = r_value**2 
    cR2 = "R^2 correlation = " + str(r_value**2)
-   print(cR2)
    
-   cLegend = cFormula + "\n" + c1 + "\n" + c2 + "\n" + c3 + "\n" + c4 + "\n" + cR2
+   st.write(cR2)
    
-   # plot solution
-   plt.figure(1)
-   #plt.plot([20,140],[20,140],'k-',label='Measured')
-   plt.title("Best Fit Analysis of ONE PHASE Hyperbolic Curve Fitting")
- 
-   #plt.plot(ym,yp,'ro',label='Predicted')           # numpy array
-   plt.scatter(ym,yp, color='red', s=1)
+   #cLegend = cFormula + "\n" + c1 + "\n" + c2 + "\n" + c3 + "\n" + c4 + "\n" + cR2
+   cLegend = cFormula + "\n" + c1 + "\n" + c2 + "\n" + c3 + "\n" + cR2
 
-   plt.xlabel('Measured Outcome (YM)')
-   plt.ylabel('Predicted Outcome (YP)')
-   
-   #plt.legend(loc='best')
-   plt.legend([cLegend])
-
-   #plt.text(25,115,'q_daily =' + str(q_daily.value[0]))
-   #plt.text(25,110,'h_hyperbolic =' + str(h_hyperbolic.value[0]))
-   #plt.text(25,105,'d_daily =' + str(d_daily.value[0]))
-   #plt.text(25,100,'d =' + str(d.value[0]))
-   #plt.text(25,90,r'$R^2$ =' + str(r_value**2))
-   #plt.text(80,40,cFormula)
-   plt.grid(True)
-   plt.show()
+   if 1 == 2: # graph of how well it fits
+      
+      st.set_option('deprecation.showPyplotGlobalUse', False) 
   
+      # plot solution
+      plt.figure(1)
+      #plt.plot([20,140],[20,140],'k-',label='Measured')
+      plt.title("Best Fit Analysis of ONE PHASE Hyperbolic Curve Fitting")
+ 
+      #plt.plot(ym,yp,'ro',label='Predicted')           # numpy array
+      plt.scatter(ym, yp, color='red', s=1)
+
+      plt.xlabel('Measured Outcome (YM)')
+      plt.ylabel('Predicted Outcome (YP)')
+   
+      #plt.legend(loc='best')
+      plt.legend([cLegend])
+
+      #plt.text(25,115,'q_daily =' + str(q_daily.value[0]))
+      #plt.text(25,110,'h_hyperbolic =' + str(h_hyperbolic.value[0]))
+      #plt.text(25,105,'d_daily =' + str(d_daily.value[0]))
+      #plt.text(25,100,'d =' + str(d.value[0]))
+      #plt.text(25,90,r'$R^2$ =' + str(r_value**2))
+      #plt.text(80,40,cFormula)
+      plt.grid(True)
+      #plt.show()
+      st.pyplot() 
+
+
+   if 1 == 1:
+
+      st.set_option('deprecation.showPyplotGlobalUse', False) 
+      fig, ax = plt.subplots(figsize=(10,7))
+      # fig, ax = plt.subplots() 
+      #ax.set_figure(figsize=(10,7))
+      #ax.step(series_time, series_rate, color='blue')
+      #ax.step(np_cum_days_std, series_rate, color='blue', label="Normalized Production Data")      
+
+      if OIL_OR_GAS == "OIL":
+         #ax.step(xm, ym, color='green', label="Normalized Oil Rate BOPD")
+         ax.step(raw_time_data, raw_rate_data, color='green', label="Normalized Oil Rate BOPD")
+    
+      elif OIL_OR_GAS == "GAS":
+         #ax.step(xm, ym, color='red', label="Normalized Gas Rate MCFD")
+         ax.step(raw_time_data, raw_rate_data, color='red', label="Normalized Gas Rate MCFD")
+ 
+      #list_predict_days = []
+      #list_predict_years = []
+      #list_actual_rate = []
+      #list_predict_rate = []
+      #list_predict_cumul = []
+
+      if 1 == 1:
+         #ax.plot(list_predict_years, list_predict_rate, color='blue', linestyle = 'dashed', label = "Predicted Rate From Hyperbolic Eqn")
+         ax.plot(list_predict_days, list_predict_rate, color='blue', linestyle = 'dashed', label = "Predicted Rate From Hyperbolic Eqn")
+    
+
+      if 1 == 2:
+         ax.plot(xm, yp, color='blue', linestyle = 'dashed', label = "Predicted Rate From Hyperbolic Eqn")
+
+      #plt.plot(students, marks, color = 'green',
+      #linestyle = 'solid', marker = 'o',
+      #markerfacecolor = 'red', markersize = 12)
+      
+      #ax.plot(xm, yp, color='red', label="Hyperbolic Curve Fit Weighted More Recent")
+          
+      #ax.plot(tfit_std, qfit_std, color='orange', label="Hyperbolic Curve Fit Not Weighted")
+
+      any_title = 'Normalized ' + OIL_OR_GAS + ' Production Rate vs Time Plot'
+      ax.set_title(any_title, size=16, weight='bold' ,pad=15)
+   
+      ax.set_xlabel('Normalized Producing Years', size=12, weight='bold')
+
+      if OIL_OR_GAS == "OIL":   
+         ax.set_ylabel('Oil Rate BOPD Normalized to 4500 Foot Lateral', size=12, weight='bold')
+      elif OIL_OR_GAS == "GAS":   
+         ax.set_ylabel('Gas Rate MCFD Normalized to 4500 Foot Lateral', size=12, weight='bold')    
+      
+      #ax.set_yscale('log')
+      #plt.semilogy()
+      #ax.set_xlim(min(series_time), max(series_time))
+      #ax.set_ylim(ymin=0)
+      #ax.set_ylabel('Cost'))
+      #ax.set_xlim(0.0, max(np_cum_days_std) * 1.50)
+      #ax.set_xlim(0.0, max(np_cum_days_std))
+  
+      #ax.set_ylim(ymin=0)
+
+
+      ax.set_yscale('log')
+
+      plt.grid(visible=True, which='major', color='gray', linestyle='-')
+      plt.grid(visible=True, which='minor', color='gray', linestyle='--')
+
+      # Create the second legend and add the artist manually.
+      #from matplotlib.legend import Legend
+      #leg = Legend(ax, lines[2:], ['line C', 'line D'], loc='lower right', frameon=True)
+      #leg = Legend(ax, ['line C', 'line D'], loc='lower right', frameon=True)
+      #ax.add_artist(leg)
+      
+      # Create the second legend and add the first manually.
+      #leg2 = ax.legend(['',''], ['line C', 'line D'], loc='lower right', frameon=True)
+      #ax.add_artist(leg2)
+      #any_cum_volume = fig_hyperbolic_cumulative_volume (q_daily, h_hyperbolic, d_daily, any_forecast_days)
+
+      any_cumul_01 = fig_hyperbolic_cumulative_volume (q_daily, h_hyperbolic, d_daily, 1.0 * 365.25)
+      any_cumul_05 = fig_hyperbolic_cumulative_volume (q_daily, h_hyperbolic, d_daily, 5.0 * 365.25)
+      any_cumul_10 = fig_hyperbolic_cumulative_volume (q_daily, h_hyperbolic, d_daily, 10.0 * 365.25)
+      any_cumul_20 = fig_hyperbolic_cumulative_volume (q_daily, h_hyperbolic, d_daily, 20.0 * 365.25)
+      any_cumul_30 = fig_hyperbolic_cumulative_volume (q_daily, h_hyperbolic, d_daily, 30.0 * 365.25)
+      text_cumul  = "EUR  1 Year = " + str(round(any_cumul_01,0))
+      text_cumul += "\nEUR  5 Year = " + str(round(any_cumul_05,0))
+      text_cumul += "\nEUR 10 Year = " + str(round(any_cumul_10,0))
+      text_cumul += "\nEUR 20 Year = " + str(round(any_cumul_20,0))
+      text_cumul += "\nEUR 30 Year = " + str(round(any_cumul_30,0))
+
+
+      from matplotlib.offsetbox import AnchoredText
+      # anchored_text = AnchoredText(text_cumul, loc=4, prop={'weight': 'bold', 'fontsize': 12, 'color': 'black'},
+      anchored_text = AnchoredText(text_cumul, loc=4, prop={'fontsize': 12, 'color': 'black'},
+                                    **{'frameon': True})
+      ax.add_artist(anchored_text)
+
+
+      print("max_daily_rate = ", gekko_max_daily_rate)
+
+
+
+      if 1 == 2:
+         
+         ax.set_yticks([0.1, 0.3, 1, 3, 10, 30, 100, 300, 1000, 3000, 10000])
+         ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+         ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+         #ax.get_yaxis().set_major_formatter(FormatStrFormatter('%.2f')) 
+         ax.set_ylim(0.1, 10000)
+         
+
+      elif gekko_max_daily_rate >= 5000:
+         ax.set_yticks([0.1, 0.3, 1, 3, 10, 30, 50, 100, 300, 1000, 3000, 10000])
+         ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+         ax.get_yaxis().set_major_formatter(FormatStrFormatter('%.1f')) 
+         ax.set_ylim(0.1, 10000)
+         
+      elif gekko_max_daily_rate >= 2000:
+         ax.set_yticks([0.03, 0.10, 0.3, 1, 3, 10, 30, 100, 300, 1000, 3000, 10000])
+         ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+         ax.get_yaxis().set_major_formatter(FormatStrFormatter('%.2f')) 
+         ax.set_ylim(0.03, 10000)
+
+      elif gekko_max_daily_rate >= 1000:
+         ax.set_yticks([0.01, 0.03, 0.1, .3, 1, 3, 10, 30, 100, 300, 1000, 3000])
+         ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+         ax.get_yaxis.set_major_formatter(FormatStrFormatter('%.2f')) 
+         ax.set_ylim(0.01, 3000)
+
+      elif gekko_max_daily_rate >= 500:
+         ax.set_yticks([0.01, 0.03, .1, .3, 1, 3, 10, 30, 100, 300, 1000, 3000])
+         ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+         ax.get_yaxis().set_major_formatter(FormatStrFormatter('%.2f')) 
+         ax.set_ylim(0.01, 3000)
+
+      elif gekko_max_daily_rate >= 200:
+         ax.set_yticks([0.003, 0.01, .03, 0.10, 0.30, 1, 3, 10, 30, 100, 300, 1000])
+         ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+         ax.get_yaxis().set_major_formatter(FormatStrFormatter('%.3f')) 
+         ax.set_ylim(0.003, 1000)        
+            
+      elif gekko_max_daily_rate >= 100:
+         ax.set_yticks([0.001, 0.003, 0.01, 0.03, 0.10, 0.30, 1, 3, 10, 30, 100, 300])
+         ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+         ax.get_yaxis().set_major_formatter(FormatStrFormatter('%.3f')) 
+         ax.set_ylim(0.001, 300)
+
+      elif gekko_max_daily_rate >= 50:
+         ax.set_yticks([0.001, 0.003, 0.01, 0.03, 0.10, 0.30, 1, 3, 10, 30, 100, 300])
+         ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+         ax.get_yaxis().set_major_formatter(FormatStrFormatter('%.3f')) 
+         ax.set_ylim(0.001, 300)
+
+      elif gekko_max_daily_rate >= 20:
+         ax.set_yticks([0.001, 0.003, 0.01, 0.03, 0.10, 0.30, 1, 3, 10, 30, 100])
+         ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+         ax.get_yaxis().set_major_formatter(FormatStrFormatter('%.3f')) 
+         ax.set_ylim(0.001, 100)        
+                  
+               
+      elif 1 == 1:
+         fdl = 1   
+      elif OIL_OR_GAS == "OIL":
+         #ax.plot([10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120], [1,2,3,4,5,6,7,8,9,10,11,12])
+         ax.set_yticks([10,20,30,40,50,60,70,80,90,100,110,120 ])
+         ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+         ax.set_ylim(10,120)
+         
+      elif OIL_OR_GAS == "GAS":
+         #ax.plot([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], [1,2,3,4,5,6,7,8,9,10,11,12])
+         ax.set_yticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ])
+         ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+         ax.set_ylim(1, 12)    
+
+
+
+      #plt.xticks(x, weight = 'bold')
+      plt.xticks(weight = 'bold')
+      plt.yticks(weight = 'bold')
+
+      #elif 1 == 1:
+      #plt.figure(1)
+
+      #plt.xticks(np.arange(2005.0, 2033+1, 2.0))
+   
+      #if OIL_OR_GAS == "OIL":
+      #   ax_set_yticks(np.arange(0, 120, 10))
+      #elif OIL_OR_GAS == "GAS":
+      #   ax.set_yticks(np.arange(0, 12, 1))
+      
+      #plt.yscale('log')    # works
+    
+
+      # Plot data and hyperbolic curve
+      #plt.figure(figsize=(10,7))
+
+      #plt.title('Decline Curve Analysis', size=20, pad=15)
+      #plt.xlabel('Days')
+      #plt.ylabel('Rate (SCF/d)')
+
+      plt.legend()
+      #plt.grid()
+      #plt.show()
+     
+      plt.grid(True)
+      plt.tight_layout() 
+      #plt.show()
+      st.pyplot()
+
+
+   if 1 == 1:
+
+      #def func_cum_hyp(self, t, qi, di, b):
+      #return (qi/((1-b)*di))*(1-(1+b*di*t)**(1-(1/b)))      
+      
+      actual_volume = 0.0
+      nPoints = len(raw_rate_data)
+      for i in range(nPoints):
+         next_daily_rate = raw_rate_data[i]
+         actual_volume = actual_volume + (next_daily_rate * 30.4375)
+
+      if OIL_OR_GAS == "GAS":     
+         cstr = "actual cumulative volume in MCF = " + str(actual_volume)
+      elif OIL_OR_GAS == "OIL":     
+         cstr = "actual cumulative volume in BBL = " + str(actual_volume)    
+      
+      st.write(cstr)      
+
+      nPoints = len(raw_time_data)
+      max_years = raw_time_data[nPoints-1]
+      cstr = "max_years = " + str(max_years)
+      st.write(cstr)
+      
+      #max_years = time_data[nPoints-1]
+      time_in_days = max_years * 365.25
+
+      estimated_cumul_000 = fig_hyperbolic_cumulative_volume (q_daily, h_hyperbolic, d_daily, time_in_days)
+      estimated_cumul = estimated_cumul_000 * 1000.
+
+      if OIL_OR_GAS == "GAS":     
+         cstr = "estimated cumulative volume from curve fit in MCF = " + str(estimated_cumul)
+      elif OIL_OR_GAS == "OIL":     
+         cstr = "estimated cumulative volume from curve fit in BBL = " + str(estimated_cumul)
+      st.write(cstr)
+   
+      time_30_years_in_days = 30.0 * 365.25
+      estimated_eur_000 = fig_hyperbolic_cumulative_volume (q_daily, h_hyperbolic, d_daily, time_30_years_in_days)
+
+      estimated_remaining_000 = estimated_eur_000 - estimated_cumul_000
+      estimated_remaining = (estimated_eur_000 - estimated_cumul_000) * 1000.0
+   
+
+      if OIL_OR_GAS == "GAS":     
+         cstr = "estimated remaining volume from curve fit in MCF = " + str(estimated_remaining)
+      elif OIL_OR_GAS == "OIL":     
+         cstr = "estimated cumulative volume from curve fit in BBL = " + str(estimated_remaining)
+      st.write(cstr)
+
+      actual_plus_forecast = actual_volume + estimated_remaining
+      if OIL_OR_GAS == "GAS":     
+         cstr = "estimated EUR (sum of actual production plus forecast of remaining in MCF) = " + str(actual_plus_forecast)
+      elif OIL_OR_GAS == "OIL":     
+         cstr = "estimated EUR (sum of actual production plus forecast of remaining in BBL) = " + str(actual_plus_forecast)
+      st.write(cstr) 
+   
+        
    return [q_daily, h_hyperbolic, d_daily, d_yearly]   # return a list
+
+
+
+
+#def fit_hyperbolic_two_phase ( rate_data, time_data, ND_OR_LC, study_product, monthly_or_yearly, study_state, test_data, list_volume_cumulative):
+                        
+def fit_hyperbolic_two_phase ( OIL_OR_GAS, raw_rate_data, raw_time_data):
+
+   test_data = "NO"
+   ND_OR_LC = "LC"
+   monthly_or_yearly = "xxxxYEARLY"
+   typecurve = "NO"
+   study_product = OIL_OR_GAS
+
+   if 1 == 1:   # DAY_OR_MONTH == "DAY":
+      nStart = 5                             # SKIP early data points .....
+      nEnd = len(raw_rate_data)
+      temp_time_data = raw_time_data[nStart:nEnd]     # option 1
+      temp_rate_data = raw_rate_data[nStart:nEnd]     # option 1
+      #temp_time_data = raw_time_data[nStart:]         # option 2
+      max_daily_rate = raw_rate_data[0]
+      if raw_rate_data[1] > max_daily_rate:
+         max_daily_rate = raw_rate_data[1]   
+      cstr = "two phase max daily rate = " + str(max_daily_rate)
+      raw_max_daily_rate = max_daily_rate
+      print(cstr)
+      st.write(cstr)
+
+   
+   time_data = []
+   rate_data = []
+   nPoints = len(raw_rate_data)
+   nSplit = -1 # int(nPoints * 0.3333)
+   
+   for i in range(nPoints):
+      if i <= nSplit:  # only analyze points after nSplit
+         fdl = 1
+      else:   
+         next_time = raw_time_data[i]
+         next_rate = raw_rate_data[i]
+         if i == 0:
+            if raw_rate_data[1] > raw_rate_data[0]:
+               next_rate = raw_rate_data[1]
+         #if next_rate == 0.0 and raw_rate_data[i-1] > 0.0:
+         #   next_rate = raw_rate_data[i-1] * 0.10
+         #else:
+         #   next_rate = 0.10
+         if next_rate > 0.0:   
+            time_data.append(next_time)
+            rate_data.append(next_rate)
+
+
+   #max_daily_rate = gekko_rate_data[0]
+   #raw_max_daily_rate = raw_rate_data[0]
+
+   #if raw_rate_data[1] > raw_rate_data[0]:
+   #   raw_max_daily_rate = raw_rate_data[1]    
+
+   #cstr = "two phase raw max daily rate = " + str(raw_max_daily_rate)
+   #print(cstr)
+   #st.write(cstr)
+
+
+
+   if 1 == 2:
+      values = fig_get_subset_of_two_lists (time_data, rate_data)
+      time_data = values[0]
+      rate_data = values[1]
+
+   aa = 1
+
+   """
+   if 1 == 1:
+      typecurve = "NO"
+   elif test_data == "YES": 
+      typecurve = "NO"
+   elif ND_OR_LC == "PT":   # ??????????????
+      typecurve = "YES"
+   elif ND_OR_LC == "ND":
+      typecurve = "YES"   
+   elif ND_OR_LC == "WELLCODE" and study_state == "ND":
+      typecurve = "YES"
+   elif ND_OR_LC == "WELLCODE" and study_state == "SD":
+      typecurve = "YES"
+   elif ND_OR_LC == "WELLCODE" and study_state == "MT":
+      typecurve = "YES"
+   elif 1 == 1:      
+      typecurve = "NO"
+   """   
+  
+   
+   iloop = 1
+   while (iloop <= 2):
+   
+      if 1 == 2:  # test_data == "YES" and iloop == 1:
+         minimum_h_string = AlertBox("Enter minimum hyperbolic value for FRAC in Two Phase (0.499-0.799-1.066)")
+         minimum_h = float(minimum_h_string)
+         #minimum_h = 0.90
+         #minimum_h = 0.149
+         #minimum_h = 0.399
+         #minimum_h = 0.699
+         #minimum_h = 0.799
+         maximum_h = 1.50
+
+      #smooth_data = "YES"
+      smooth_data = "NO"
+ 
+      if 1 == 1: # monthly_or_yearly == "DAILY" and ND_OR_LC == "ND":
+         smooth_data = "NO"
+         #smooth_data = "YES"
+  
+      elif iloop >= 2:
+         smooth_data = "NO"
+  
+      if smooth_data == "YES":
+         
+         display_plot = "NO"     
+         values = fig_smoothed_data (rate_data, time_data, ND_OR_LC, study_product, display_plot, list_volume_cumulative)
+         smoothed_rate_data = values[0]
+         smoothed_time_data = values[1]
+            
+         rate_data = smoothed_rate_data
+         time_data = smoothed_time_data
+     
+         data_points = len(smoothed_rate_data)
+         
+         how_many = data_points   # all data points
+         #how_many = 12            # only the first 24 data points
+         #how_many = 9            # only the first 24 data points
+         
+         if how_many == data_points:
+            rate_data = smoothed_rate_data
+            time_data = smoothed_time_data
+         elif 1 == 1:
+            rate_data = []
+            time_data = []
+            for i in range(how_many):
+               rate_data.append(smoothed_rate_data[i])
+               time_data.append(smoothed_time_data[i])
+      
+      if 1 == 1:   # DAY_OR_MONTH == "DAY":
+         gekko_rate_data = rate_data
+         gekko_time_data = time_data
+         #max_daily_rate = gekko_rate_data[0]
+         #if gekko_rate_data[1] > max_daily_rate:
+         #   max_daily_rate = gekko_rate_data[1]   
+         #cstr = "fit_hyperbolic_two_phase: max daily rate = " + str(max_daily_rate)
+         #print(cstr)
+         #st.write(cstr)
+         #gekko_time_data = time_data
+      elif 1 == 2: # monthly_or_yearly == "YEAR":   # fix - pass DAY_OR_MONTH ???????????
+         gekko_rate_data = []
+         gekko_time_data = []
+         data_points = len(rate_data)
+         for i in range(data_points):
+            if i == 0: 
+               any_cum_days = i + (365.25/2.)     # 0 = 365/2    1 = 1 + 365/2
+            elif 1 == 1:
+               any_cum_days += 365.25
+    
+            gekko_time_data.append(any_cum_days)
+            any_annual_volume = rate_data[i]
+            any_daily_volume = any_annual_volume / 365.25
+            gekko_rate_data.append(any_daily_volume)
+            
+         max_daily_rate = gekko_rate_data[0]           #   fix to use max function .....
+         cstr = "max daily rate = " + str(max_daily_rate)
+         print(cstr)
+
+         #print(gekko_time_data)
+         #input("Press ENTER to continue...")
+      
+         #print(gekko_rate_data)
+         #input("Press ENTER to continue...")
+
+         # fix for MONTH .....
+
+
+      if iloop <= 2:
+
+         # start GEKKO code here .........................
+
+         # GEKKO model
+         m = GEKKO()
+   
+      if test_data == "YES":  
+         gekko_q_daily1 = m.FV(lb=max_daily_rate*0.05,ub=max_daily_rate*5.0)    # q_daily  in case first point is late in life
+         gekko_q_daily2 = m.FV(lb=max_daily_rate*0.05,ub=max_daily_rate*5.0)    # q_daily
+       
+      elif 1 == 1:   # STD_OR_SPECIAL == "SPECIAL":
+         gekko_q_daily1 = m.FV(lb=max_daily_rate*0.10,ub=max_daily_rate*1.40)    # q_daily
+         gekko_q_daily2 = m.FV(lb=max_daily_rate*0.10,ub=max_daily_rate*1.40)    # q_daily
+       
+      if test_data == "xxxYES":  
+         #gekko_h_hyperbolic1 = m.FV(lb=1.01,ub=1.3)   # fracture hyperbolic
+         gekko_h_hyperbolic1 = m.FV(lb=minimum_h,ub=maximum_h)   # fracture hyperbolic
+      elif typecurve == "xxxYES":   # ND type curve
+         gekko_h_hyperbolic1 = m.FV(lb=1.272417,ub=1.272417)   # fracture hyperbolic
+      elif 1 == 1:   # STD_OR_SPECIAL == "SPECIAL":
+         gekko_h_hyperbolic1 = m.FV(lb=0.01,ub=4.1)   # fracture hyperbolic
+         #gekko_h_hyperbolic1 = m.FV(lb=0.01,ub=3.1)   # fracture hyperbolic
+ 
+      if test_data == "xxxYES":
+         gekko_h_hyperbolic2 = m.FV(lb=0.01,ub=1.29)   # limit hyperbolic for matrix ?????
+         #gekko_h_hyperbolic2 = m.FV(lb=0.01,ub=1.98)   # limit hyperbolic for matrix ?????
+ 
+      elif 1 == 2:
+         gekko_h_hyperbolic2 = m.FV(lb=0.03,ub=1.98)   # limit hyperbolic for matrix ?????
+      elif 1 == 1:
+         gekko_h_hyperbolic2 = m.FV(lb=0.01,ub=10.0)   # could set lb to about 0.4 .................
+         
+
+      gekko_d_daily1 = m.FV(lb=0.0,ub=0.333)    # 99.9999 yearly
+      gekko_d_daily2 = m.FV(lb=0.0,ub=0.333)     
+      #gekko_d_daily1 = m.FV(lb=0.0,ub=0.01846906)    # 99.9 yearly
+      #gekko_d_daily2 = m.FV(lb=0.0,ub=0.01846906)     
+      #gekko_d_daily1 = m.FV(lb=0.0,ub=0.01065338)   # 98 yearly
+      #gekko_d_daily2 = m.FV(lb=0.0,ub=0.01065338)
+   
+      gekko_base = m.FV(lb=max_daily_rate*0.0,ub=max_daily_rate*0.0) # set to zero   # base adjustment
+      
+      gekko_max_daily_rate = m.FV(lb=max_daily_rate,ub=max_daily_rate)  
+
+      # d_daily
+      #gekko_d_yearly = m.FV(lb=0.0,ub=99.999999)                            # d_yearly
+ 
+      #d = m.FV(lb=-100.0,ub=100.0)
+
+      # hyperbolic fit this.........................................
+      # ym = list_daily_rate       
+      # xm = list_days_cumulative    
+
+      # use lists 
+      xm = m.Param(value=gekko_time_data)       # GIVEN cumulative days
+      #x2 = m.Param(value=list_xm2)  # GIVEN
+      #x3 = m.Param(value=list_xm3)  # GIVEN
+      ym = m.Param(value=gekko_rate_data)          # GIVEN daily rate   z = ym
+ 
+      yp1 = m.Var()  # fracture                   # y is yp    UNKNOWN
+      yp2 = m.Var()  # matrix                    # y is yp    UNKNOWN
+      yp = m.Var()                     # y is yp    UNKNOWN
+
+      m.Equation( yp1 == gekko_q_daily1 / ( 1.0 + gekko_h_hyperbolic1 * gekko_d_daily1 * xm ) ** (1.0/gekko_h_hyperbolic1) )
+      m.Equation( yp2 == gekko_q_daily2 / ( 1.0 + gekko_h_hyperbolic2 * gekko_d_daily2 * xm ) ** (1.0/gekko_h_hyperbolic2) )
+      #m.Equation( yp == gekko_base + yp1 + yp2 )
+      m.Equation( yp == yp1 + yp2 )    # do not use base ...
+
+      if 1 == 2:
+         m.Equation( gekko_q_daily1 + gekko_d_daily2 >= gekko_max_daily_rate ) 
+
+      if 1 == 1:
+         fdl = 1   
+      elif test_data == "YES":  
+         #m.Equation( gekko_q_daily1 / gekko_q_daily2 >= 1.33 )      # fracture flow >= matrix flow
+         #m.Equation( gekko_h_hyperbolic1 / gekko_h_hyperbolic2 >= 2.0 )    # fracture flow >= matrix flow
+         m.Equation( gekko_h_hyperbolic1 / gekko_h_hyperbolic2 >= 1.33 )    # fracture flow >= matrix flow
+         #m.Equation( gekko_d_daily1 / gekko_d_daily2 >= 1.50 )    # fracture flow >= matrix flow
+      elif test_data == "xxxYES":  
+         m.Equation( gekko_q_daily1 / gekko_q_daily2 >= 1.33 )      # fracture flow >= matrix flow
+         m.Equation( gekko_h_hyperbolic1 / gekko_h_hyperbolic2 >= 2.0 )    # fracture flow >= matrix flow
+         m.Equation( gekko_d_daily1 / gekko_d_daily2 >= 1.50 )    # fracture flow >= matrix flow
+         #m.Equation( gekko_h_hyperbolic2 <= 0.25 )  # BEST  # fracture flow >= matrix flow
+               
+      elif typecurve == "YES":   # ND type curve
+         #m.Equation( gekko_h_hyperbolic1 / gekko_h_hyperbolic2 >= 1.33 )    # fracture flow >= matrix flow
+         m.Equation( gekko_q_daily1 / gekko_q_daily2 >= 1.33 )      # fracture flow >= matrix flow
+         m.Equation( gekko_h_hyperbolic1 / gekko_h_hyperbolic2 >= 2.0 )    # fracture flow >= matrix flow
+         m.Equation( gekko_d_daily1 / gekko_d_daily2 >= 1.50 )    # fracture flow >= matrix flow
+         #m.Equation( gekko_h_hyperbolic2 <= 0.50 )  # FAIR # fracture flow >= matrix flow
+         m.Equation( gekko_h_hyperbolic2 <= 0.25 )  # BEST  # fracture flow >= matrix flow
+         #m.Equation( gekko_h_hyperbolic2 <= 0.10 ) # too low   # fracture flow >= matrix flow
+      
+      elif ND_OR_LC == "WELLCODE":
+         m.Equation( gekko_h_hyperbolic1 > gekko_h_hyperbolic2 )    # fracture flow >= matrix flow
+         m.Equation( gekko_q_daily1 / gekko_q_daily2 >= 1.33 )    # fracture flow >= matrix flow
+      elif monthly_or_yearly == "DAILY" and ND_OR_LC == "ND":
+         #m.Equation( gekko_h_hyperbolic1 / gekko_h_hyperbolic2 >= 1.33 )    # fracture flow >= matrix flow
+         m.Equation( gekko_q_daily1 / gekko_q_daily2 >= 1.33 )      # fracture flow >= matrix flow
+         m.Equation( gekko_h_hyperbolic1 / gekko_h_hyperbolic2 >= 2.0 )    # fracture flow >= matrix flow
+         m.Equation( gekko_d_daily1 / gekko_d_daily2 >= 1.50 )    # fracture flow >= matrix flow
+         #m.Equation( gekko_h_hyperbolic2 <= 0.50 )  # FAIR # fracture flow >= matrix flow
+         m.Equation( gekko_h_hyperbolic2 <= 0.25 )  # BEST  # fracture flow >= matrix flow
+         #m.Equation( gekko_h_hyperbolic2 <= 0.10 ) # too low   # fracture flow >= matrix flow
+      elif 1 == 1:
+         m.Equation( gekko_h_hyperbolic1 / gekko_h_hyperbolic2 >= 1.33 )    # fracture flow >= matrix flow
+
+         
+         #m.Equation( gekko_h_hyperbolic1 > gekko_h_hyperbolic2 )    # fracture flow >= matrix flow
+ 
+         #m.Equation( gekko_q_daily1 / gekko_q_daily2 >= 1.5 )    # fracture flow >= matrix flow
+         #m.Equation( gekko_h_hyperbolic1 >= gekko_h_hyperbolic2 )   # will this work ?????
+
+      #m.Equation(y==a*(x1**b)*(x2**c)*(x3**d))
+      #m.Equation( gekko_d_daily == 1 - (( 100.0 - gekko_d_yearly ) / 100.0) ** (1./365.0) )  
+
+      # D_DAILY = 1 - (( 100.0 - D_YEARLY ) / 100.0) ^ (1/365.00)
+
+      m.Obj(((yp-ym)/ym)**2)
+
+      # Options
+      gekko_base.STATUS = 1
+      gekko_q_daily1.STATUS = 1
+      gekko_q_daily2.STATUS = 1 
+      gekko_h_hyperbolic1.STATUS = 1
+      gekko_h_hyperbolic2.STATUS = 1
+      gekko_d_daily1.STATUS = 1
+      gekko_d_daily2.STATUS = 1
+
+      #gekko_d_yearly.STATUS = 1
+ 
+      #d.STATUS = 1
+      m.options.IMODE = 2
+      m.options.SOLVER = 1
+
+      # Solve
+      m.solve()
+
+      q_daily1 = gekko_q_daily1.value[0]             # convert from gekko to variable
+      q_daily2 = gekko_q_daily2.value[0]             # convert from gekko to variable
+ 
+      h_hyperbolic1 = gekko_h_hyperbolic1.value[0]
+      h_hyperbolic2 = gekko_h_hyperbolic2.value[0]
+ 
+      d_daily1 = gekko_d_daily1.value[0]
+      d_daily2 = gekko_d_daily2.value[0]
+   
+      base = gekko_base.value[0]
+   
+      #d_yearly = gekko_d_yearly.value[0]
+ 
+ 
+      c1 = "two phase q_daily1 fracture = " + str(q_daily1)
+      print (c1)
+      st.write(c1)
+      
+      c2 = "two phases q_daily2 matrix = " + str(q_daily2)
+      print (c2)
+      st.write(c2)
+
+      c3 = "two phase h_hyperbolic fracture = " + str(h_hyperbolic1)
+      print (c3)
+      st.write(c3)
+
+      c4 = "two phase h_hyperbolic matrix = " + str(h_hyperbolic2)
+      print (c4)
+      st.write(c4)
+
+      #print (c2)
+
+      c5 = "two phase d_daily fracture = " + str(d_daily1)
+      print (c5)
+      st.write(c5)
+
+      c6 = "two phase d_daily matrix = " + str(d_daily2)
+      print (c6)
+      st.write(c6)
+
+      #print (c3)
+      """ 
+      c7 = "d_yearly fracture = " + str(d_yearly1)
+      c8 = "d_yearly matrix = " + str(d_yearly2)
+      """
+      cFormula = "Formula is : " + "\n" + "Two Phase Hyperbolic Equation"
+
+      #print (c3)
+      #print (c4)
+      #input("Press ENTER to continue...")
+
+
+
+    
+      if iloop == 1: 
+
+         #values = fig_d_yearly_nominal (d_daily1)     # call GEKKO
+         #d_yearly1 = 100.0 * values[0]   # as a percent
+         d_yearly1 = 99.99   # not needed yet
+
+         #values = fig_d_yearly_nominal (d_daily2)     # call GEKKO
+         #d_yearly2 = 100.0 * values[0]   # as a percent
+         d_yearly2 = 99.99   # not needed yet
+
+      elif iloop >= 2: 
+
+         values = fig_d_yearly_nominal (d_daily1)     # call GEKKO    # could modify to calc both at same time
+         d_yearly1 = 100.0 * values[0]   # as a percent
+
+         values = fig_d_yearly_nominal (d_daily2)     # call GEKKO
+         d_yearly2 = 100.0 * values[0]   # as a percent
+
+
+      c7 = "two phase d_yearly fracture (percent) = " + str(d_yearly1)
+      print (c7)
+      st.write(c7)
+ 
+      c8 = "two phase d_yearly matrix (percent) = " + str(d_yearly2)
+      print (c8)
+      st.write(c8)
+      
+      #input("Press ENTER to continue...")
+
+     
+
+      #cFormula = "Formula is : " + "\n" + \
+      #           r"$A * WTI^B * HH^C * PROPANE^D$"
+
+
+
+      from scipy import stats
+      slope, intercept, r_value, p_value, \
+                 std_err = stats.linregress(ym, yp)   # GEKKO variables ... # numpy array
+
+      r2 = r_value**2 
+      cR2 = "two phase R^2 correlation = " + str(r_value**2)
+      print(cR2)
+      st.write(r2)
+
+      old_data_points = len(rate_data)
+      if iloop == 1:   # ND_OR_LC == "WELLCODE":
+
+         if 1 == 2:
+            values = fig_remove_outlier_points (ym, yp, rate_data, time_data, ND_OR_LC, study_product)
+            new_smoothed_rate_data = values[0]
+            new_smoothed_time_data = values[1]
+            
+            rate_data = new_smoothed_rate_data
+            time_data = new_smoothed_time_data
+
+
+  
+         new_data_points = len(rate_data)
+         cstr = "two phase old data points = " + str(old_data_points)
+         cstr += "   new data points = " + str(new_data_points) + " after removing outliers"
+         print(cstr)
+         st.write(cstr)
+         cPoints1 = "two phase Original points included = " + str(old_data_points)
+         print(cPoints1)
+         st.write(cstr)
+         cPoints2 = "two phase Points after removing outliers = " + str(new_data_points)
+         print(cPoints2)
+         st.write(cstr)
+         #cPoints = "Points included after removing outliers = " + str(new_data_points)
+         #print(cPoints)
+         #input("Press ENTER to continue...")
+
+
+      cLegend = cFormula + "\n" + c1 + "\n" + c2 + "\n" + c3 + "\n" + c4 + "\n"
+      
+      if iloop == 1:   # ND_OR_LC == "WELLCODE":
+         cLegend += c5 + "\n" + c6 + "\n" + c7 + "\n" + c8 + "\n" + cR2 
+      elif 1 == 1:   
+          cLegend += c5 + "\n" + c6 + "\n" + c7 + "\n" + c8 + "\n" + cR2 + "\n" + cPoints1 + "\n" + cPoints2
+
+      #cLegend = "NOT YET"
+          
+      if iloop == 2:  # only show final plot  
+
+         # plot solution
+         plt.figure(1)
+         #plt.plot([20,140],[20,140],'k-',label='Measured')
+         plt.title("Best Fit Analysis of TWO PHASE Hyperbolic Curve Fitting for loop = " + str(iloop))
+ 
+         #plt.plot(ym,yp,'ro',label='Predicted')           # numpy array
+         plt.scatter(ym, yp, color='black', s=2)
+
+         plt.xlabel('Measured Outcome (YM)')
+         plt.ylabel('Predicted Outcome (YP)')
+   
+         #plt.legend(loc='best')
+         plt.legend([cLegend])
+
+         #plt.text(25,115,'q_daily =' + str(q_daily.value[0]))
+         #plt.text(25,110,'h_hyperbolic =' + str(h_hyperbolic.value[0]))
+         #plt.text(25,105,'d_daily =' + str(d_daily.value[0]))
+         #plt.text(25,100,'d =' + str(d.value[0]))
+         #plt.text(25,90,r'$R^2$ =' + str(r_value**2))
+         #plt.text(80,40,cFormula)
+         plt.grid(True)
+         #plt.show()
+         st.pyplot()
+
+      if 1 == 2:   # monthly_or_yearly == "DAILY" and ND_OR_LC == "ND":
+         iloop = iloop + 100    # only 1 loop !!!
+      elif 1 == 1:
+         iloop = iloop + 1
+   
+      
+   if d_daily1 == 0.0:
+      d_daily1 = 0.000001
+   if d_daily2 == 0.0:
+      d_daily2 = 0.000001
+   if d_yearly1 == 0.0:
+      d_yearly1 = 0.000001
+   if d_yearly2 == 0.0:
+      d_yearly2 = 0.000001      
+
+
+
+   if 1 == 1:
+
+      st.set_option('deprecation.showPyplotGlobalUse', False) 
+      fig, ax = plt.subplots(figsize=(10,7))
+      # fig, ax = plt.subplots() 
+      #ax.set_figure(figsize=(10,7))
+      #ax.step(series_time, series_rate, color='blue')
+      #ax.step(np_cum_days_std, series_rate, color='blue', label="Normalized Production Data")      
+
+      if OIL_OR_GAS == "OIL":
+         #ax.step(xm, ym, color='green', label="Normalized Oil Rate BOPD")
+         #ax.step(raw_time_data, raw_rate_data, color='green', label="Normalized Oil Rate BOPD")
+         ax.step(time_data, rate_data, color='green', label="Normalized Oil Rate BOPD")
+ 
+    
+      elif OIL_OR_GAS == "GAS":
+         #ax.step(xm, ym, color='red', label="Normalized Gas Rate MCFD")
+         #ax.step(raw_time_data, raw_rate_data, color='red', label="Normalized Gas Rate MCFD")
+         ax.step(time_data, rate_data, color='red', label="Normalized Gas Rate MCFD")
+
+         
+
+      ax.plot(xm, yp, color='blue', linestyle = 'dashed', label = "Predicted Rate From Two Phase Hyperbolic Eqn")
+
+      #plt.plot(students, marks, color = 'green',
+      #linestyle = 'solid', marker = 'o',
+      #markerfacecolor = 'red', markersize = 12)
+      
+      #ax.plot(xm, yp, color='red', label="Hyperbolic Curve Fit Weighted More Recent")
+          
+      #ax.plot(tfit_std, qfit_std, color='orange', label="Hyperbolic Curve Fit Not Weighted")
+
+      any_title = 'Two Phase Normalized ' + OIL_OR_GAS + ' Production Rate vs Time Plot'
+      ax.set_title(any_title, size=16, weight='bold' ,pad=15)
+   
+      ax.set_xlabel('Normalized Producing Years', size=12, weight='bold')
+
+      if OIL_OR_GAS == "OIL":   
+         ax.set_ylabel('Oil Rate BOPD Normalized to 4500 Foot Lateral', size=12, weight='bold')
+      elif OIL_OR_GAS == "GAS":   
+         ax.set_ylabel('Gas Rate MCFD Normalized to 4500 Foot Lateral', size=12, weight='bold')    
+      
+      #ax.set_yscale('log')
+      #plt.semilogy()
+      #ax.set_xlim(min(series_time), max(series_time))
+      #ax.set_ylim(ymin=0)
+      #ax.set_ylabel('Cost'))
+      #ax.set_xlim(0.0, max(np_cum_days_std) * 1.50)
+      #ax.set_xlim(0.0, max(np_cum_days_std))
+  
+      #ax.set_ylim(ymin=0)
+
+
+      ax.set_yscale('log')
+
+      #ax2 = ax1.twinx()    # TWIN
+
+      print("max_daily_rate = ", raw_max_daily_rate)
+
+
+
+      if 1 == 2:
+         
+         ax.set_yticks([0.1, 0.3, 1, 3, 10, 30, 100, 300, 1000, 3000, 10000])
+         ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+         ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+         #ax.get_yaxis().set_major_formatter(FormatStrFormatter('%.2f')) 
+         ax.set_ylim(0.1, 10000)
+         
+
+      elif raw_max_daily_rate >= 5000:
+         ax.set_yticks([0.1, 0.3, 1, 3, 10, 30, 50, 100, 300, 1000, 3000, 10000])
+         ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+         ax.get_yaxis().set_major_formatter(FormatStrFormatter('%.1f')) 
+         ax.set_ylim(0.1, 10000)
+         
+      elif raw_max_daily_rate >= 2000:
+         ax.set_yticks([0.03, 0.10, 0.3, 1, 3, 10, 30, 100, 300, 1000, 3000, 10000])
+         ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+         ax.get_yaxis().set_major_formatter(FormatStrFormatter('%.2f')) 
+         ax.set_ylim(0.03, 10000)
+
+      elif raw_max_daily_rate >= 1000:
+         ax.set_yticks([0.01, 0.03, 0.1, .3, 1, 3, 10, 30, 100, 300, 1000, 3000])
+         ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+         ax.get_yaxis.set_major_formatter(FormatStrFormatter('%.2f')) 
+         ax.set_ylim(0.01, 3000)
+
+      elif raw_max_daily_rate >= 500:
+         ax.set_yticks([0.01, 0.03, .1, .3, 1, 3, 10, 30, 100, 300, 1000, 3000])
+         ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+         ax.get_yaxis().set_major_formatter(FormatStrFormatter('%.2f')) 
+         ax.set_ylim(0.01, 3000)
+
+      elif raw_max_daily_rate >= 200:
+         ax.set_yticks([0.003, 0.01, .03, 0.10, 0.30, 1, 3, 10, 30, 100, 300, 1000])
+         ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+         ax.get_yaxis().set_major_formatter(FormatStrFormatter('%.3f')) 
+         ax.set_ylim(0.003, 1000)        
+            
+      elif raw_max_daily_rate >= 100:
+         ax.set_yticks([0.001, 0.003, 0.01, 0.03, 0.10, 0.30, 1, 3, 10, 30, 100, 300])
+         ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+         ax.get_yaxis().set_major_formatter(FormatStrFormatter('%.3f')) 
+         ax.set_ylim(0.001, 300)
+
+      elif raw_max_daily_rate >= 50:
+         ax.set_yticks([0.001, 0.003, 0.01, 0.03, 0.10, 0.30, 1, 3, 10, 30, 100, 300])
+         ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+         ax.get_yaxis().set_major_formatter(FormatStrFormatter('%.3f')) 
+         ax.set_ylim(0.001, 300)
+
+      elif raw_max_daily_rate >= 20:
+         ax.set_yticks([0.001, 0.003, 0.01, 0.03, 0.10, 0.30, 1, 3, 10, 30, 100])
+         ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+         ax.get_yaxis().set_major_formatter(FormatStrFormatter('%.3f')) 
+         ax.set_ylim(0.001, 100)        
+                  
+               
+      elif 1 == 1:
+         fdl = 1   
+      elif OIL_OR_GAS == "OIL":
+         #ax.plot([10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120], [1,2,3,4,5,6,7,8,9,10,11,12])
+         ax.set_yticks([10,20,30,40,50,60,70,80,90,100,110,120 ])
+         ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+         ax.set_ylim(10,120)
+         
+      elif OIL_OR_GAS == "GAS":
+         #ax.plot([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], [1,2,3,4,5,6,7,8,9,10,11,12])
+         ax.set_yticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ])
+         ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+         ax.set_ylim(1, 12)    
+
+
+
+      #plt.xticks(x, weight = 'bold')
+      plt.xticks(weight = 'bold')
+      plt.yticks(weight = 'bold')
+
+      #elif 1 == 1:
+      #plt.figure(1)
+
+      #plt.xticks(np.arange(2005.0, 2033+1, 2.0))
+   
+      #if OIL_OR_GAS == "OIL":
+      #   ax_set_yticks(np.arange(0, 120, 10))
+      #elif OIL_OR_GAS == "GAS":
+      #   ax.set_yticks(np.arange(0, 12, 1))
+      
+      #plt.yscale('log')    # works
+      
+
+
+  
+
+      # Plot data and hyperbolic curve
+      #plt.figure(figsize=(10,7))
+
+      #plt.title('Decline Curve Analysis', size=20, pad=15)
+      #plt.xlabel('Days')
+      #plt.ylabel('Rate (SCF/d)')
+
+      plt.legend()
+      #plt.grid()
+      #plt.show()
+     
+      plt.grid(True)
+      plt.tight_layout() 
+      #plt.show()
+      st.pyplot()
+
+
+   if 1 == 2:
+      
+      actual_volume = 0.0
+      nPoints = len(raw_rate_data)
+      for i in range(nPoints):
+         next_daily_rate = raw_rate_data[i]
+         actual_volume = actual_volume + (next_daily_rate * 30.4375)
+
+      if OIL_OR_GAS == "GAS":     
+         cstr = "actual cumulative volume in MCF = " + str(actual_volume)
+      elif OIL_OR_GAS == "OIL":     
+         cstr = "actual cumulative volume in BBL = " + str(actual_volume)    
+      
+      st.write(cstr)      
+
+      nPoints = len(raw_time_data)
+      max_years = raw_time_data[nPoints-1]
+      cstr = "max_years = " + str(max_years)
+      st.write(cstr)
+      
+      #max_years = time_data[nPoints-1]
+      time_in_days = max_years * 365.25
+   
+      # def fig_twophase_cumulative_volume (q_daily1, h_hyperbolic1, d_daily1, q_daily2, h_hyperbolic2, d_daily2, time_days):
+
+      estimated_cumul_000 = fig_hyperbolic_cumulative_volume (q_daily, h_hyperbolic, d_daily, time_in_days)
+      estimated_cumul = estimated_cumul_000 * 1000.
+
+      if OIL_OR_GAS == "GAS":     
+         cstr = "estimated cumulative volume from curve fit in MCF = " + str(estimated_cumul)
+      elif OIL_OR_GAS == "OIL":     
+         cstr = "estimated cumulative volume from curve fit in BBL = " + str(estimated_cumul)
+      st.write(cstr)
+   
+      time_30_years_in_days = 30.0 * 365.25
+      estimated_eur_000 = fig_hyperbolic_cumulative_volume (q_daily, h_hyperbolic, d_daily, time_30_years_in_days)
+
+      estimated_remaining_000 = estimated_eur_000 - estimated_cumul_000
+      estimated_remaining = (estimated_eur_000 - estimated_cumul_000) * 1000.0
+   
+      if OIL_OR_GAS == "GAS":     
+         cstr = "estimated remaining volume from curve fit in MCF = " + str(estimated_remaining)
+      elif OIL_OR_GAS == "OIL":     
+         cstr = "estimated cumulative volume from curve fit in BBL = " + str(estimated_remaining)
+      st.write(cstr)
+
+      actual_plus_forecast = actual_volume + estimated_remaining
+      if OIL_OR_GAS == "GAS":     
+         cstr = "estimated EUR (sum of actual production plus forecast of remaining in MCF) = " + str(actual_plus_forecast)
+      elif OIL_OR_GAS == "OIL":     
+         cstr = "estimated EUR (sum of actual production plus forecast of remaining in BBL) = " + str(actual_plus_forecast)
+      st.write(cstr) 
+   
+
+
+
+  
+   #return [q_daily, h_hyperbolic, d_daily, d_yearly]   # return a list
+   return [max_daily_rate, q_daily1, q_daily2, h_hyperbolic1, h_hyperbolic2, d_daily1, d_daily2, d_yearly1, d_yearly2, base]   # return a list
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1223,416 +2644,6 @@ def fit_hyperbolic ( rate_data, time_data, ND_OR_LC, study_year, study_product, 
 
    
 
-                                                                              
-def fit_hyperbolic_two_phase ( rate_data, time_data, ND_OR_LC, study_product, monthly_or_yearly, study_state, test_data, list_volume_cumulative):
-
-   values = fig_get_subset_of_two_lists (time_data, rate_data)
-   time_data = values[0]
-   rate_data = values[1]
-
-   aa = 1
-   
-   if test_data == "YES": 
-      typecurve = "NO"
-   elif ND_OR_LC == "PT":   # ??????????????
-      typecurve = "YES"
-   elif ND_OR_LC == "ND":
-      typecurve = "YES"   
-   elif ND_OR_LC == "WELLCODE" and study_state == "ND":
-      typecurve = "YES"
-   elif ND_OR_LC == "WELLCODE" and study_state == "SD":
-      typecurve = "YES"
-   elif ND_OR_LC == "WELLCODE" and study_state == "MT":
-      typecurve = "YES"
-   elif 1 == 1:      
-      typecurve = "NO"
-  
-   
-   iloop = 1
-   while (iloop <= 2):
-   
-      if test_data == "YES" and iloop == 1:
-         minimum_h_string = AlertBox("Enter minimum hyperbolic value for FRAC in Two Phase (0.499-0.799-1.066)")
-         minimum_h = float(minimum_h_string)
-         #minimum_h = 0.90
-         #minimum_h = 0.149
-         #minimum_h = 0.399
-         #minimum_h = 0.699
-         #minimum_h = 0.799
-         maximum_h = 1.50
-
-      smooth_data = "YES"
-      if monthly_or_yearly == "DAILY" and ND_OR_LC == "ND":
-         #smooth_data = "NO"
-         smooth_data = "YES"
-  
-      elif iloop >= 2:
-         smooth_data = "NO"
-  
-      if smooth_data == "YES":
-         
-         display_plot = "NO"     
-         values = fig_smoothed_data (rate_data, time_data, ND_OR_LC, study_product, display_plot, list_volume_cumulative)
-         smoothed_rate_data = values[0]
-         smoothed_time_data = values[1]
-            
-         rate_data = smoothed_rate_data
-         time_data = smoothed_time_data
-     
-         data_points = len(smoothed_rate_data)
-         
-         how_many = data_points   # all data points
-         #how_many = 12            # only the first 24 data points
-         #how_many = 9            # only the first 24 data points
-         
-         if how_many == data_points:
-            rate_data = smoothed_rate_data
-            time_data = smoothed_time_data
-         elif 1 == 1:
-            rate_data = []
-            time_data = []
-            for i in range(how_many):
-               rate_data.append(smoothed_rate_data[i])
-               time_data.append(smoothed_time_data[i])
-      
-      if 1 == 1:   # DAY_OR_MONTH == "DAY":
-         gekko_rate_data = rate_data
-         gekko_time_data = time_data
-         max_daily_rate = gekko_rate_data[0]
-         cstr = "fit_hyperbolic_two_phase: max daily rate = " + str(max_daily_rate)
-         print(cstr)
-         gekko_time_data = time_data
-      elif monthly_or_yearly == "YEAR":         # fix - pass DAY_OR_MONTH ???????????
-         gekko_rate_data = []
-         gekko_time_data = []
-         data_points = len(rate_data)
-         for i in range(data_points):
-            if i == 0: 
-               any_cum_days = i + (365.25/2.)     # 0 = 365/2    1 = 1 + 365/2
-            elif 1 == 1:
-               any_cum_days += 365.25
-    
-            gekko_time_data.append(any_cum_days)
-            any_annual_volume = rate_data[i]
-            any_daily_volume = any_annual_volume / 365.25
-            gekko_rate_data.append(any_daily_volume)
-            
-         max_daily_rate = gekko_rate_data[0]           #   fix to use max function .....
-         cstr = "max daily rate = " + str(max_daily_rate)
-         print(cstr)
-
-         #print(gekko_time_data)
-         #input("Press ENTER to continue...")
-      
-         #print(gekko_rate_data)
-         #input("Press ENTER to continue...")
-
-         # fix for MONTH .....
-
-
-      if iloop <= 2:
-
-         # start GEKKO code here .........................
-
-         # GEKKO model
-         m = GEKKO()
-   
-      if test_data == "YES":  
-         gekko_q_daily1 = m.FV(lb=max_daily_rate*0.05,ub=max_daily_rate*5.0)    # q_daily  in case first point is late in life
-         gekko_q_daily2 = m.FV(lb=max_daily_rate*0.05,ub=max_daily_rate*5.0)    # q_daily
-       
-      elif 1 == 1:   # STD_OR_SPECIAL == "SPECIAL":
-         gekko_q_daily1 = m.FV(lb=max_daily_rate*0.10,ub=max_daily_rate*1.40)    # q_daily
-         gekko_q_daily2 = m.FV(lb=max_daily_rate*0.10,ub=max_daily_rate*1.40)    # q_daily
-       
-      if test_data == "YES":  
-         #gekko_h_hyperbolic1 = m.FV(lb=1.01,ub=1.3)   # fracture hyperbolic
-         gekko_h_hyperbolic1 = m.FV(lb=minimum_h,ub=maximum_h)   # fracture hyperbolic
-      elif typecurve == "YES":   # ND type curve
-         gekko_h_hyperbolic1 = m.FV(lb=1.272417,ub=1.272417)   # fracture hyperbolic
-      elif 1 == 1:   # STD_OR_SPECIAL == "SPECIAL":
-         gekko_h_hyperbolic1 = m.FV(lb=0.19,ub=1.99)   # fracture hyperbolic
-         #gekko_h_hyperbolic1 = m.FV(lb=0.01,ub=3.1)   # fracture hyperbolic
- 
-      if test_data == "YES":
-         gekko_h_hyperbolic2 = m.FV(lb=0.01,ub=1.29)   # limit hyperbolic for matrix ?????
-         #gekko_h_hyperbolic2 = m.FV(lb=0.01,ub=1.98)   # limit hyperbolic for matrix ?????
- 
-      elif 1 == 1:
-         gekko_h_hyperbolic2 = m.FV(lb=0.03,ub=1.98)   # limit hyperbolic for matrix ?????
-      elif 1 == 1:
-         gekko_h_hyperbolic2 = m.FV(lb=0.40,ub=1.5)   # could set lb to about 0.4 .................
-         
-
-      gekko_d_daily1 = m.FV(lb=0.0,ub=0.03102907)    # 99.9999 yearly
-      gekko_d_daily2 = m.FV(lb=0.0,ub=0.03102907)     
-      #gekko_d_daily1 = m.FV(lb=0.0,ub=0.01846906)    # 99.9 yearly
-      #gekko_d_daily2 = m.FV(lb=0.0,ub=0.01846906)     
-      #gekko_d_daily1 = m.FV(lb=0.0,ub=0.01065338)   # 98 yearly
-      #gekko_d_daily2 = m.FV(lb=0.0,ub=0.01065338)
-   
-      gekko_base = m.FV(lb=max_daily_rate*0.0,ub=max_daily_rate*0.0) # set to zero   # base adjustment
-      
-      gekko_max_daily_rate = m.FV(lb=max_daily_rate,ub=max_daily_rate)  
-
-      # d_daily
-      #gekko_d_yearly = m.FV(lb=0.0,ub=99.999999)                            # d_yearly
- 
-      #d = m.FV(lb=-100.0,ub=100.0)
-
-      # hyperbolic fit this.........................................
-      # ym = list_daily_rate       
-      # xm = list_days_cumulative    
-
-      # use lists 
-      xm = m.Param(value=gekko_time_data)       # GIVEN cumulative days
-      #x2 = m.Param(value=list_xm2)  # GIVEN
-      #x3 = m.Param(value=list_xm3)  # GIVEN
-      ym = m.Param(value=gekko_rate_data)          # GIVEN daily rate   z = ym
- 
-      yp1 = m.Var()  # fracture                   # y is yp    UNKNOWN
-      yp2 = m.Var()  # matrix                    # y is yp    UNKNOWN
-      yp = m.Var()                     # y is yp    UNKNOWN
-
-      m.Equation( yp1 == gekko_q_daily1 / ( 1.0 + gekko_h_hyperbolic1 * gekko_d_daily1 * xm ) ** (1.0/gekko_h_hyperbolic1) )
-      m.Equation( yp2 == gekko_q_daily2 / ( 1.0 + gekko_h_hyperbolic2 * gekko_d_daily2 * xm ) ** (1.0/gekko_h_hyperbolic2) )
-      #m.Equation( yp == gekko_base + yp1 + yp2 )
-      m.Equation( yp == yp1 + yp2 )    # do not use base ...
-      m.Equation( gekko_q_daily1 + gekko_d_daily2 >= gekko_max_daily_rate ) 
-
-      if test_data == "YES":  
-         #m.Equation( gekko_q_daily1 / gekko_q_daily2 >= 1.33 )      # fracture flow >= matrix flow
-         #m.Equation( gekko_h_hyperbolic1 / gekko_h_hyperbolic2 >= 2.0 )    # fracture flow >= matrix flow
-         m.Equation( gekko_h_hyperbolic1 / gekko_h_hyperbolic2 >= 1.33 )    # fracture flow >= matrix flow
-         #m.Equation( gekko_d_daily1 / gekko_d_daily2 >= 1.50 )    # fracture flow >= matrix flow
-      elif test_data == "xxxYES":  
-         m.Equation( gekko_q_daily1 / gekko_q_daily2 >= 1.33 )      # fracture flow >= matrix flow
-         m.Equation( gekko_h_hyperbolic1 / gekko_h_hyperbolic2 >= 2.0 )    # fracture flow >= matrix flow
-         m.Equation( gekko_d_daily1 / gekko_d_daily2 >= 1.50 )    # fracture flow >= matrix flow
-         #m.Equation( gekko_h_hyperbolic2 <= 0.25 )  # BEST  # fracture flow >= matrix flow
-               
-      elif typecurve == "YES":   # ND type curve
-         #m.Equation( gekko_h_hyperbolic1 / gekko_h_hyperbolic2 >= 1.33 )    # fracture flow >= matrix flow
-         m.Equation( gekko_q_daily1 / gekko_q_daily2 >= 1.33 )      # fracture flow >= matrix flow
-         m.Equation( gekko_h_hyperbolic1 / gekko_h_hyperbolic2 >= 2.0 )    # fracture flow >= matrix flow
-         m.Equation( gekko_d_daily1 / gekko_d_daily2 >= 1.50 )    # fracture flow >= matrix flow
-         #m.Equation( gekko_h_hyperbolic2 <= 0.50 )  # FAIR # fracture flow >= matrix flow
-         m.Equation( gekko_h_hyperbolic2 <= 0.25 )  # BEST  # fracture flow >= matrix flow
-         #m.Equation( gekko_h_hyperbolic2 <= 0.10 ) # too low   # fracture flow >= matrix flow
-      
-      elif ND_OR_LC == "WELLCODE":
-         m.Equation( gekko_h_hyperbolic1 > gekko_h_hyperbolic2 )    # fracture flow >= matrix flow
-         m.Equation( gekko_q_daily1 / gekko_q_daily2 >= 1.33 )    # fracture flow >= matrix flow
-      elif monthly_or_yearly == "DAILY" and ND_OR_LC == "ND":
-         #m.Equation( gekko_h_hyperbolic1 / gekko_h_hyperbolic2 >= 1.33 )    # fracture flow >= matrix flow
-         m.Equation( gekko_q_daily1 / gekko_q_daily2 >= 1.33 )      # fracture flow >= matrix flow
-         m.Equation( gekko_h_hyperbolic1 / gekko_h_hyperbolic2 >= 2.0 )    # fracture flow >= matrix flow
-         m.Equation( gekko_d_daily1 / gekko_d_daily2 >= 1.50 )    # fracture flow >= matrix flow
-         #m.Equation( gekko_h_hyperbolic2 <= 0.50 )  # FAIR # fracture flow >= matrix flow
-         m.Equation( gekko_h_hyperbolic2 <= 0.25 )  # BEST  # fracture flow >= matrix flow
-         #m.Equation( gekko_h_hyperbolic2 <= 0.10 ) # too low   # fracture flow >= matrix flow
-      elif 1 == 1:
-         m.Equation( gekko_h_hyperbolic1 / gekko_h_hyperbolic2 >= 1.33 )    # fracture flow >= matrix flow
-
-         
-         #m.Equation( gekko_h_hyperbolic1 > gekko_h_hyperbolic2 )    # fracture flow >= matrix flow
- 
-         #m.Equation( gekko_q_daily1 / gekko_q_daily2 >= 1.5 )    # fracture flow >= matrix flow
-         #m.Equation( gekko_h_hyperbolic1 >= gekko_h_hyperbolic2 )   # will this work ?????
-
-      #m.Equation(y==a*(x1**b)*(x2**c)*(x3**d))
-      #m.Equation( gekko_d_daily == 1 - (( 100.0 - gekko_d_yearly ) / 100.0) ** (1./365.0) )  
-
-      # D_DAILY = 1 - (( 100.0 - D_YEARLY ) / 100.0) ^ (1/365.00)
-
-      m.Obj(((yp-ym)/ym)**2)
-
-      # Options
-      gekko_base.STATUS = 1
-      gekko_q_daily1.STATUS = 1
-      gekko_q_daily2.STATUS = 1 
-      gekko_h_hyperbolic1.STATUS = 1
-      gekko_h_hyperbolic2.STATUS = 1
-      gekko_d_daily1.STATUS = 1
-      gekko_d_daily2.STATUS = 1
-
-      #gekko_d_yearly.STATUS = 1
- 
-      #d.STATUS = 1
-      m.options.IMODE = 2
-      m.options.SOLVER = 1
-
-      # Solve
-      m.solve()
-
-      q_daily1 = gekko_q_daily1.value[0]             # convert from gekko to variable
-      q_daily2 = gekko_q_daily2.value[0]             # convert from gekko to variable
- 
-      h_hyperbolic1 = gekko_h_hyperbolic1.value[0]
-      h_hyperbolic2 = gekko_h_hyperbolic2.value[0]
- 
-      d_daily1 = gekko_d_daily1.value[0]
-      d_daily2 = gekko_d_daily2.value[0]
-   
-      base = gekko_base.value[0]
-   
-      #d_yearly = gekko_d_yearly.value[0]
- 
- 
-      c1 = "q_daily1 fracture = " + str(q_daily1)
-      print (c1)
-
-      c2 = "q_daily2 matrix = " + str(q_daily2)
-      print (c2)
-
-
-      c3 = "h_hyperbolic fracture = " + str(h_hyperbolic1)
-      print (c3)
-
-      c4 = "h_hyperbolic matrix = " + str(h_hyperbolic2)
-      print (c4)
-
-      #print (c2)
-
-      c5 = "d_daily fracture = " + str(d_daily1)
-      print (c5)
-
-      c6 = "d_daily matrix = " + str(d_daily2)
-      print (c6)
-
-      #print (c3)
-      """ 
-      c7 = "d_yearly fracture = " + str(d_yearly1)
-      c8 = "d_yearly matrix = " + str(d_yearly2)
-      """
-      cFormula = "Formula is : " + "\n" + "Two Phase Hyperbolic Equation"
-
-      #print (c3)
-      #print (c4)
-      #input("Press ENTER to continue...")
-
-
-
-    
-      if iloop == 1: 
-
-         #values = fig_d_yearly_nominal (d_daily1)     # call GEKKO
-         #d_yearly1 = 100.0 * values[0]   # as a percent
-         d_yearly1 = 99.99   # not needed yet
-
-         #values = fig_d_yearly_nominal (d_daily2)     # call GEKKO
-         #d_yearly2 = 100.0 * values[0]   # as a percent
-         d_yearly2 = 99.99   # not needed yet
-
-      elif iloop >= 2: 
-
-         values = fig_d_yearly_nominal (d_daily1)     # call GEKKO    # could modify to calc both at same time
-         d_yearly1 = 100.0 * values[0]   # as a percent
-
-         values = fig_d_yearly_nominal (d_daily2)     # call GEKKO
-         d_yearly2 = 100.0 * values[0]   # as a percent
-
-
-      c7 = "d_yearly fracture (percent) = " + str(d_yearly1)
-      print (c7)
- 
-      c8 = "d_yearly matrix (percent) = " + str(d_yearly2)
-      print (c8)
-      #input("Press ENTER to continue...")
-
-     
-
-      #cFormula = "Formula is : " + "\n" + \
-      #           r"$A * WTI^B * HH^C * PROPANE^D$"
-
-
-
-      from scipy import stats
-      slope, intercept, r_value, p_value, \
-                 std_err = stats.linregress(ym, yp)   # GEKKO variables ... # numpy array
-
-      r2 = r_value**2 
-      cR2 = "R^2 correlation = " + str(r_value**2)
-      print(cR2)
-
-
-      old_data_points = len(rate_data)
-      if iloop == 1:   # ND_OR_LC == "WELLCODE":
-      
-         values = fig_remove_outlier_points (ym, yp, rate_data, time_data, ND_OR_LC, study_product)
-         new_smoothed_rate_data = values[0]
-         new_smoothed_time_data = values[1]
-            
-         rate_data = new_smoothed_rate_data
-         time_data = new_smoothed_time_data
-  
-         new_data_points = len(rate_data)
-         cstr = "old data points = " + str(old_data_points)
-         cstr += "   new data points = " + str(new_data_points) + " after removing outliers"
-         print(cstr)
-         cPoints1 = "Original points included = " + str(old_data_points)
-         print(cPoints1)
-         cPoints2 = "Points after removing outliers = " + str(new_data_points)
-         print(cPoints2)
-         #cPoints = "Points included after removing outliers = " + str(new_data_points)
-         #print(cPoints)
-         #input("Press ENTER to continue...")
-
-
-      cLegend = cFormula + "\n" + c1 + "\n" + c2 + "\n" + c3 + "\n" + c4 + "\n"
-      
-      if iloop == 1:   # ND_OR_LC == "WELLCODE":
-         cLegend += c5 + "\n" + c6 + "\n" + c7 + "\n" + c8 + "\n" + cR2 
-      elif 1 == 1:   
-          cLegend += c5 + "\n" + c6 + "\n" + c7 + "\n" + c8 + "\n" + cR2 + "\n" + cPoints1 + "\n" + cPoints2
-
-      #cLegend = "NOT YET"
-          
-      if iloop == 2:  # only show final plot  
-
-         # plot solution
-         plt.figure(1)
-         #plt.plot([20,140],[20,140],'k-',label='Measured')
-         plt.title("Best Fit Analysis of TWO PHASE Hyperbolic Curve Fitting for loop = " + str(iloop))
- 
-         #plt.plot(ym,yp,'ro',label='Predicted')           # numpy array
-         plt.scatter(ym,yp, color='black', s=2)
-
-         plt.xlabel('Measured Outcome (YM)')
-         plt.ylabel('Predicted Outcome (YP)')
-   
-         #plt.legend(loc='best')
-         plt.legend([cLegend])
-
-         #plt.text(25,115,'q_daily =' + str(q_daily.value[0]))
-         #plt.text(25,110,'h_hyperbolic =' + str(h_hyperbolic.value[0]))
-         #plt.text(25,105,'d_daily =' + str(d_daily.value[0]))
-         #plt.text(25,100,'d =' + str(d.value[0]))
-         #plt.text(25,90,r'$R^2$ =' + str(r_value**2))
-         #plt.text(80,40,cFormula)
-         plt.grid(True)
-         plt.show()
- 
-      if 1 == 2:   # monthly_or_yearly == "DAILY" and ND_OR_LC == "ND":
-         iloop = iloop + 100    # only 1 loop !!!
-      elif 1 == 1:
-         iloop = iloop + 1
-   
-      
-   if d_daily1 == 0.0:
-      d_daily1 = 0.000001
-   if d_daily2 == 0.0:
-      d_daily2 = 0.000001
-   if d_yearly1 == 0.0:
-      d_yearly1 = 0.000001
-   if d_yearly2 == 0.0:
-      d_yearly2 = 0.000001      
-  
-   #return [q_daily, h_hyperbolic, d_daily, d_yearly]   # return a list
-   return [max_daily_rate, q_daily1, q_daily2, h_hyperbolic1, h_hyperbolic2, d_daily1, d_daily2, d_yearly1, d_yearly2, base]   # return a list
-
-
-
   
 
 
@@ -1799,7 +2810,7 @@ def fig_twophase_d_yearly_at_time_t (q_daily1, h_hyperbolic1, d_daily1, q_daily2
 
 
 
-def fig_hyperbolic_d_daily_at_time_t (q_daily, h_hyperbolic, d_daily, time_days):    # effective decline rate
+def fig_hyperbolic_d_daily_at_time_t (q_daily, h_hyperbolic, d_daily, time_days):  # effective decline rate
   
    # find derivative ...
    

@@ -23,7 +23,9 @@ def main():
    #    This app is maintained by Fulton Loebel
    #    """
    #)
-   
+
+   any_state = "OK"  
+
    # oENGINE, oSQLITE = open_sqlite_conn(database, db_sqlite)
 
    #db_sqlite = 'hz_kansas.sqlite'
@@ -35,22 +37,27 @@ def main():
    #st.write(list_tables)
 
   
-   st.subheader("Summary Data of Lease Count By County")
-   cSQL  = "SELECT count(COUNTY) AS 'LEASE COUNT', COUNTY, STATE FROM Lease "
-   cSQL += "GROUP BY COUNTY ORDER BY count(COUNTY) DESC" # LIMIT 20 ASC
+   any_title = "Summary Data of Lease Count By County in State of " + any_state
+   st.subheader(any_title)
+  
+   cSQL  = "SELECT count(COUNTY) AS 'LEASE COUNT', "
+   cSQL += "COUNTY AS 'County', STATE AS 'State' "
+   cSQL += "FROM Lease "
+   cSQL += "WHERE LAT_LENGTH > 1000 AND First_Year >= 2005 "
+   cSQL += "GROUP BY COUNTY ORDER BY count(COUNTY) DESC LIMIT 12" # LIMIT 20 ASC
    # LIMIT 10
    
    #with st.spinner("Loading  ..."):
-   df_county_summary = df_from_sqlite("KS", cSQL)
+   df_county_summary = df_from_sqlite("OK", cSQL)
 
    #df_county_summary = database_to_df(oENGINE, cSQL)
    #df_county_summary = df_county_summary.head(20)  
    st.dataframe(df_county_summary)
 
    # plot the data
-   fig_scatter = px.scatter(df_county_summary, x='LEASE COUNT', y='COUNTY', 
+   fig_scatter = px.scatter(df_county_summary, x='LEASE COUNT', y='County', 
            title="MY TITLE", 
-           color="STATE", hover_data=["COUNTY", "STATE"])
+           color="State", hover_data=["County", "State"])
    fig_scatter.update_layout(yaxis={'visible': True, 'showticklabels': True})
    fig_scatter.update_layout(xaxis={'visible': True, 'showticklabels': True})
    fig_scatter.update_traces(marker=dict(size=5, opacity=0.7, line=dict(width=1,color='DarkSlateGrey')),selector=dict(mode='markers'))
@@ -63,7 +70,7 @@ def main():
    fig_pie_chart = px.pie(df_county_summary,
                       title='Pie Chart of Wells Per County',
                       values='LEASE COUNT',
-                      names='COUNTY')
+                      names='County')
 
    #st.plotly_chart(fig_pie_chart)
    st.plotly_chart(fig_pie_chart, use_container_width=True)
@@ -83,7 +90,7 @@ def main():
       df_county_summary,
       x="LEASE COUNT",
       #y=sales_by_product_line.index,
-      y="COUNTY",
+      y="County",
       orientation="h",
       title="<b>Well Counts By County</b>",
       color_discrete_sequence=["#0083B8"] * len(df_county_summary),
@@ -109,13 +116,13 @@ def main():
    #dist_county = pd.DataFrame(df_county["Sepal_Length"].value_counts())
    st.subheader("Wells By County Distribution Plot")
    #st.bar_chart(df_county_summary["LEASE COUNT"])
-   st.bar_chart(data = df_county_summary, x="LEASE COUNT", y="COUNTY")
+   st.bar_chart(data = df_county_summary, x="LEASE COUNT", y="County")
 
 
 
    st.subheader("Summary Plot of Lease Count By County")
    fig = plt.figure(figsize=(10, 4))
-   sns.countplot(data = df_county_summary, y='COUNTY')
+   sns.countplot(data = df_county_summary, y='County')
    st.pyplot(fig)
 
 
