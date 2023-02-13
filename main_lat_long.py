@@ -277,12 +277,17 @@ def main():
    
    INIT_COORDINATES = ( df_map.SurfLat.mean(), df_map.SurfLong.mean() )
 
-
-
-   if 1 == 1:    # works
+   if 1 == 2:  # CRASH utf-8
+      my_map = folium.Map(location=INIT_COORDINATES, tiles = "Stamen Terrain", zoom_start = 8)
+      geo_json = open("us_counties_5m.geojson", "r", encoding="utf-8-sig")
+      my_map.add_child(folium.GeoJson(data=geo_json.read()))
+      my_map.add_child(folium.LayerControl()) 
+      my_map.add_child(geo_json) 
+   
+   elif 1 == 2:    # works only local ...
       my_map = folium.Map(location=INIT_COORDINATES, tiles = "Stamen Terrain", zoom_start = 8)
       geo_json = folium.GeoJson("us_counties_5m.geojson",
-                 style_function= county_style_function)
+                                 style_function= county_style_function)
       my_map.add_child(geo_json) 
    elif 1 == 2: #   elif county_code == "US":
       my_map = folium.Map(location=INIT_COORDINATES, tiles = "Stamen Terrain", zoom_start = 10)
@@ -291,7 +296,7 @@ def main():
                  highlight_function=county_highlight_function)
       # Note that this is the same as geojson.add_to(map)
       my_map.add_child(geo_json, name='county layer')  
-   elif 1 == 1: # FULTECH_OR_TOP == "TOP":
+   elif 1 == 2: # FULTECH_OR_TOP == "TOP":
       my_map = folium.Map(location=INIT_COORDINATES, tiles = "Stamen Terrain", zoom_start = 10)
       geo_json4 = folium.GeoJson("KANSAS_TOWNSHIPS.geojson", style_function= township_style_function, highlight_function=township_highlight_function)
       #geo_json4 = folium.GeoJson("KANSAS_TOWNSHIPS.geojson", style_function= township_style_function) 
@@ -299,7 +304,7 @@ def main():
          
   
 
-   elif 1 == 1:
+   elif 1 == 2:
       
       #INIT_COORDINATES = (36.99015, -97.03633)
 
@@ -333,7 +338,7 @@ def main():
       lat_avg = df_map["SurfLat"].mean()
       lon_avg = df_map["SurfLong"].mean()
       value = df_map["Lateral_Length"]
-      my_map = folium.Map(location=[lat_avg, lon_avg], zoom_start=12)
+      my_map = folium.Map(location=[lat_avg, lon_avg], zoom_start=6)
 
       #fg = folium.FeatureGroup(name="My Map")    
 
@@ -438,7 +443,7 @@ def main():
          color = fig_color(value)
          folium.CircleMarker(
                        location = [lat, long],\
-                       radius = 0.5,
+                       radius = 0.05,
                        color = color,
                        fill = True,
                        fill_color = color,
