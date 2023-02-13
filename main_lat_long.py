@@ -231,7 +231,12 @@ def fig_color(value):
         return 'blue'      
     else:
         return 'green'
+
+def handle_change():
+   if st.session_state.state_picked:
+      st.session_state.type = st.session_state.state_picked
       
+   
 
 def main():
 
@@ -246,222 +251,239 @@ def main():
    #import pandas as pd
    #import streamlit as st
    from streamlit_folium import st_folium
-      
-   st.title("Mapping Lateral Lengths")
+
+   any_state = "OK"
+   state_picked = "OK"
+   st.session_state['any_state'] = ""  # initialize          
+
+   if len(st.session_state.any_state) == 0:
+      any_title = "Select either KS (Kansas) or OK (Oklahoma) to analyze horizontal well lateral lengths"
+   else:  
+      any_title = "Mapping of Horizontal Well Lateral Length in State Of " + any_state
+   #st.title(any_title)
+   st.subheader(any_title)
+ 
    #st.info(
    #    """
    #    This app is maintained by Fulton Loebel
    #    """
    #)
 
-   cSQL  = "SELECT LeaseID, LeaseName, SurfaceLatitude AS 'SurfLat', SurfaceLongitude AS 'SurfLong', "
-   cSQL += "BottomLatitude AS 'BotLat', BottomLongitude AS 'BotLong', OPERATOR AS 'Operator', "
-   cSQL += "LAT_LENGTH AS 'Lateral_Length', "
-   cSQL += "Reservoir, COUNTY AS 'County', STATE AS 'State' "
-   cSQL += "FROM Lease "
-   cSQL += "WHERE LAT_LENGTH > 1000.0 "
- 
-   # LIMIT 10
-   any_state = "OK"
-   df_map = df_from_sqlite(any_state, cSQL)
-   #df_map.insert(2, 'Lateral_Length', df_map.apply(lambda row: fig_lat_length(row), axis=1))  
-   #df_map = df_map.query('Lateral_Length > 1000.0')  
+   list_states = ["KS", "OK"]
+   
+   state_picked = st.radio("Select another state to analyze", list_states,
+                           on_change=handle_change, key='state_picked')
+   if state_picked:
 
-   st.subheader("Latitude Longitude Mapping Analysis")
-   if 1 == 1:
-      st.dataframe(df_map)
+      any_state = state_picked
+      cstr = "You currently have " + state_picked + " selected (click above to change states)"
+      st.write(cstr)
       
-   
-   center_lat  = df_map.SurfLat.mean()
-   center_long = df_map.SurfLong.mean()
-   
-   INIT_COORDINATES = ( df_map.SurfLat.mean(), df_map.SurfLong.mean() )
+      st.session_state['any_state'] = state_picked                       
+  
+   #if len(st.session_state.any_state) >= 1:
+   if st.session_state['any_state'] in list_states:
+      
 
-   if 1 == 2:  # CRASH utf-8
-      my_map = folium.Map(location=INIT_COORDINATES, tiles = "Stamen Terrain", zoom_start = 8)
-      geo_json = open("us_counties_5m.geojson", "r", encoding="utf-8-sig")
-      my_map.add_child(folium.GeoJson(data=geo_json.read()))
-      my_map.add_child(folium.LayerControl()) 
-      my_map.add_child(geo_json) 
+      cSQL  = "SELECT LeaseID, LeaseName, SurfaceLatitude AS 'SurfLat', SurfaceLongitude AS 'SurfLong', "
+      cSQL += "BottomLatitude AS 'BotLat', BottomLongitude AS 'BotLong', OPERATOR AS 'Operator', "
+      cSQL += "LAT_LENGTH AS 'Lateral_Length', "
+      cSQL += "Reservoir, COUNTY AS 'County', STATE AS 'State' "
+      cSQL += "FROM Lease "
+      cSQL += "WHERE LAT_LENGTH > 1000.0 "
+ 
+      # LIMIT 10
    
-   elif 1 == 2:    # works only local ...
-      my_map = folium.Map(location=INIT_COORDINATES, tiles = "Stamen Terrain", zoom_start = 8)
-      geo_json = folium.GeoJson("us_counties_5m.geojson",
-                                 style_function= county_style_function)
-      my_map.add_child(geo_json) 
-   elif 1 == 2: #   elif county_code == "US":
-      my_map = folium.Map(location=INIT_COORDINATES, tiles = "Stamen Terrain", zoom_start = 10)
-      geo_json = folium.GeoJson("us_counties_5m.geojson", 
-                 style_function= county_style_function,
-                 highlight_function=county_highlight_function)
-      # Note that this is the same as geojson.add_to(map)
-      my_map.add_child(geo_json, name='county layer')  
-   elif 1 == 2: # FULTECH_OR_TOP == "TOP":
-      my_map = folium.Map(location=INIT_COORDINATES, tiles = "Stamen Terrain", zoom_start = 10)
-      geo_json4 = folium.GeoJson("KANSAS_TOWNSHIPS.geojson", style_function= township_style_function, highlight_function=township_highlight_function)
-      #geo_json4 = folium.GeoJson("KANSAS_TOWNSHIPS.geojson", style_function= township_style_function) 
-      my_map.add_child(geo_json4, name='township layer')   # Note that this is the same as geojson.add_to(map)
+      df_map = df_from_sqlite(any_state, cSQL)
+      #df_map.insert(2, 'Lateral_Length', df_map.apply(lambda row: fig_lat_length(row), axis=1))  
+      #df_map = df_map.query('Lateral_Length > 1000.0')  
+
+      if 1 == 2:
+         any_title = "Mapping of Horizontal Well Lateral Length in State Of " + any_state
+         st.subheader(any_title)
+  
+      if 1 == 2:
+         st.dataframe(df_map)
          
-  
+      center_lat  = df_map.SurfLat.mean()
+      center_long = df_map.SurfLong.mean()
+   
+      INIT_COORDINATES = ( df_map.SurfLat.mean(), df_map.SurfLong.mean() )
 
-   elif 1 == 2:
+      if 1 == 2:  # CRASH utf-8
+         my_map = folium.Map(location=INIT_COORDINATES, tiles = "Stamen Terrain", zoom_start = 8)
+         geo_json = open("us_counties_5m.geojson", "r", encoding="utf-8-sig")
+         my_map.add_child(folium.GeoJson(data=geo_json.read()))
+         my_map.add_child(folium.LayerControl()) 
+         my_map.add_child(geo_json) 
+   
+      elif 1 == 2:    # works only local ...
+         my_map = folium.Map(location=INIT_COORDINATES, tiles = "Stamen Terrain", zoom_start = 8)
+         geo_json = folium.GeoJson("us_counties_5m.geojson",
+                                    style_function= county_style_function)
+         my_map.add_child(geo_json) 
+      elif 1 == 2: #   elif county_code == "US":
+         my_map = folium.Map(location=INIT_COORDINATES, tiles = "Stamen Terrain", zoom_start = 10)
+         geo_json = folium.GeoJson("us_counties_5m.geojson", 
+                    style_function= county_style_function,
+                    highlight_function=county_highlight_function)
+         # Note that this is the same as geojson.add_to(map)
+         my_map.add_child(geo_json, name='county layer')  
+      elif 1 == 2: # FULTECH_OR_TOP == "TOP":
+         my_map = folium.Map(location=INIT_COORDINATES, tiles = "Stamen Terrain", zoom_start = 10)
+         geo_json4 = folium.GeoJson("KANSAS_TOWNSHIPS.geojson", style_function= township_style_function, highlight_function=township_highlight_function)
+         #geo_json4 = folium.GeoJson("KANSAS_TOWNSHIPS.geojson", style_function= township_style_function) 
+         my_map.add_child(geo_json4, name='township layer')   # Note that this is the same as geojson.add_to(map)
       
-      #INIT_COORDINATES = (36.99015, -97.03633)
-
-      my_map = folium.Map(location=INIT_COORDINATES, tiles = "Stamen Terrain", zoom_start = 10)
-      geo_json = open("kansas_counties.geojson", "r", encoding="utf-8-sig")
-      my_map.add_child(folium.GeoJson(data=geo_json.read()))
-      my_map.add_child(folium.LayerControl()) 
-
-      #my_map.to_streamlit(height=700)
-      #events = st_folium(my_map)  # WORKS 
-      #st.write(events)
- 
-  
-   elif 1 == 2:
-      np_lat  = df_lat_long[df_lat_long["State"] == "KS"].SurfLat.values  #[0]
-      np_long = df_lat_long[df_lat_long["State"] == "KS"].SurfLong.values #[0]
-
-      #m = folium.Map(location=[np_lat, np_long])
-      my_map = leafmap.Map(center = [center_lat, center_long], tiles="stamentoner", zoom=2)
-      #m = leafmap.Map(center = [50,110], zoom=4)
-
-      #my_map.to_streamlit(height=700)
-
-
-   elif 1 == 1:
-  
-
-      #df_folium = df_lat_long.copy()
-      #trees_df = trees_df.head(n=100)
-
-      lat_avg = df_map["SurfLat"].mean()
-      lon_avg = df_map["SurfLong"].mean()
-      value = df_map["Lateral_Length"]
-      my_map = folium.Map(location=[lat_avg, lon_avg], zoom_start=6)
-
-      #fg = folium.FeatureGroup(name="My Map")    
-
-
-   if 1 == 1:
-
-      my_legend_html = '''
-<style>
-.legend {
-  background-color: white;
-  padding: 10px;
-  border: 2px solid gray;
-  border-radius: 5px;
-  font-size: 12px;
-}
-.legend i {
-  display: inline-block;
-  width: 20px;
-  height: 20px;
-  margin-right: 10px;
-}
-.bold {
-  font-weight: bold;
-}
-.title {
-  font-size: 16px;
-  font-weight: bold;
-  margin-bottom: 10px;
-}
-</style>
-<div class="legend">
-
-  <div class="title">Legend for Horizontal Well Lateral Length Map</div>
-  <span class="bold"><i style="background-color: orange"></i>Lateral Length >= 8000 feet</span>
-  <br>
-  <span class="bold"><i style="background-color: red"></i>6000 <= Lateral Length <= 8000 feet</span>
-  <br>
-  <span class="bold"><i style="background-color: purple"></i>4000 <= Lateral Length <= 6000 feet</span>
-  <br>
-  <span class="bold"><i style="background-color: blue"></i>2000 <= Lateral Length <= 4000 feet</span>
-  <br>
-  <span class="bold"><i style="background-color: green"></i>Lateral Length <= 2000 feet</span>
-  <br>
- </div>
-'''
-
-
-
-      # Add the legend to the app
-      st.write(my_legend_html, unsafe_allow_html=True)
-      st.write('<br><br>', unsafe_allow_html=True)
-
-
-
-   elif 1 == 1:  # add legend to map
-
-      my_legend_html = """
-      <div style=
-      "position: fixed;background-color: rgba(255, 255, 255, 0.5); border-radius: 5px;
-      bottom: 50px; left: 10px; width: 200px; height: 280px; border:2px solid grey; z-index:9999; font-size:14px;
-      ">
-      <p style="text-align:center;"> <b> Cleveland Legend </b> </p>
-      <p style="margin-left:5px"> <i class="fa fa-square fa-1x" style="margin-right:5px;color:green;"></i> Oil Cumulative </p>
-      <p style="margin-left:5px"> <i class="fa fa-square fa-1x" style="margin-right:5px;color:red;"></i> Gas Cumulative </p>
-      <p style="margin-left:5px"> <i class="fa fa-square fa-1x" style="margin-right:5px; color:blue;"></i> Oil and Gas Cumulative </p>
-      <p style="margin-left:5px"> <i class="fa fa-square fa-1x" style="margin-right:5px; color:purple;"></i> Cleveland Net Pay </p>
-      <p style="margin-left:5px"> <i class="fa fa-square fa-1x" style="margin-right:5px; color:black;"></i> TIF Without Net Pay </p>
-      <p style="margin-left:5px"> <i class="fa fa-square fa-1x" style="margin-right:5px; color:brown;"></i> LAS (2000-2019) </p>
-      <p style="margin-left:5px"> <i class="fa fa-square fa-1x" style="margin-right:5px; color:orange;"></i> LAS (1980=1999) </p>
-      <p style="margin-left:5px"> <i class="fa fa-square fa-1x" style="margin-right:5px; color:yellow;"></i> LAS (Pre 1980) </p>
-      </div>
-      """
-      st.write(my_legend_html, unsafe_allow_html=True)
- 
-   elif 1 == 2:
+      elif 1 == 2:
       
-      my_legend_html = '''
-        <div style="position: fixed; 
-        bottom: 50px; left: 50px; width: 100px; height: 90px; 
-        border:2px solid grey; z-index:9999; font-size:14px;
-        ">&nbsp; Cool Legend <br>
-            &nbsp; East &nbsp; <i class="fa fa-map-marker fa-2x"
-                 style="color:green"></i><br>
-            &nbsp; West &nbsp; <i class="fa fa-map-marker fa-2x"
-                 style="color:red"></i>
-        </div>
-        '''
-      my_legend_layer = folium.Element(my_legend_html)
-      # Add the legend to the map
-      #my_map.get_root().html.add_child(folium.Element(my_legend_layer))
-      #my_map.get_root().html.add_child(folium.Element(my_legend_layer))
-      #                ).add_to(my_map)
+         #INIT_COORDINATES = (36.99015, -97.03633)
 
+         my_map = folium.Map(location=INIT_COORDINATES, tiles = "Stamen Terrain", zoom_start = 10)
+         geo_json = open("kansas_counties.geojson", "r", encoding="utf-8-sig")
+         my_map.add_child(folium.GeoJson(data=geo_json.read()))
+         my_map.add_child(folium.LayerControl()) 
+
+         #my_map.to_streamlit(height=700)
+         #events = st_folium(my_map)  # WORKS 
+         #st.write(events)
+  
+      elif 1 == 2:
+         np_lat  = df_lat_long[df_lat_long["State"] == "KS"].SurfLat.values  #[0]
+         np_long = df_lat_long[df_lat_long["State"] == "KS"].SurfLong.values #[0]
+
+         #m = folium.Map(location=[np_lat, np_long])
+         my_map = leafmap.Map(center = [center_lat, center_long], tiles="stamentoner", zoom=2)
+         #m = leafmap.Map(center = [50,110], zoom=4)
+
+         #my_map.to_streamlit(height=700)
+
+      elif 1 == 1:
+  
+         #df_folium = df_lat_long.copy()
+         #trees_df = trees_df.head(n=100)
+
+         lat_avg = df_map["SurfLat"].mean()
+         lon_avg = df_map["SurfLong"].mean()
+         value = df_map["Lateral_Length"]
+         my_map = folium.Map(location=[lat_avg, lon_avg], zoom_start=6)
+
+         #fg = folium.FeatureGroup(name="My Map")    
+
+      if 1 == 1:
+
+         my_legend_html = '''
+         <style>
+         .legend {
+           background-color: white;
+           padding: 10px;
+           border: 2px solid gray;
+           border-radius: 5px;
+           font-size: 12px;
+         }
+         .legend i {
+           display: inline-block;
+           width: 20px;
+           height: 20px;
+           margin-right: 10px;
+         }
+         .bold {
+           font-weight: bold;
+         }
+         .title {
+           font-size: 16px;
+           font-weight: bold;
+           margin-bottom: 10px;
+         }
+         </style>
+         <div class="legend">
+
+           <div class="title">Legend for Horizontal Well Lateral Length Map</div>
+           <span class="bold"><i style="background-color: orange"></i>Lateral Length >= 8000 feet</span>
+           <br>
+           <span class="bold"><i style="background-color: red"></i>6000 <= Lateral Length <= 8000 feet</span>
+           <br>
+           <span class="bold"><i style="background-color: purple"></i>4000 <= Lateral Length <= 6000 feet</span>
+           <br>
+           <span class="bold"><i style="background-color: blue"></i>2000 <= Lateral Length <= 4000 feet</span>
+           <br>
+           <span class="bold"><i style="background-color: green"></i>Lateral Length <= 2000 feet</span>
+           <br>
+          </div>
+         '''
+
+
+         # Add the legend to the app
+         st.write(my_legend_html, unsafe_allow_html=True)
+         st.write('<br><br>', unsafe_allow_html=True)
+
+      elif 1 == 1:  # add legend to map
+
+         my_legend_html = """
+         <div style=
+         "position: fixed;background-color: rgba(255, 255, 255, 0.5); border-radius: 5px;
+         bottom: 50px; left: 10px; width: 200px; height: 280px; border:2px solid grey; z-index:9999; font-size:14px;
+         ">
+         <p style="text-align:center;"> <b> Cleveland Legend </b> </p>
+         <p style="margin-left:5px"> <i class="fa fa-square fa-1x" style="margin-right:5px;color:green;"></i> Oil Cumulative </p>
+         <p style="margin-left:5px"> <i class="fa fa-square fa-1x" style="margin-right:5px;color:red;"></i> Gas Cumulative </p>
+         <p style="margin-left:5px"> <i class="fa fa-square fa-1x" style="margin-right:5px; color:blue;"></i> Oil and Gas Cumulative </p>
+         <p style="margin-left:5px"> <i class="fa fa-square fa-1x" style="margin-right:5px; color:purple;"></i> Cleveland Net Pay </p>
+         <p style="margin-left:5px"> <i class="fa fa-square fa-1x" style="margin-right:5px; color:black;"></i> TIF Without Net Pay </p>
+         <p style="margin-left:5px"> <i class="fa fa-square fa-1x" style="margin-right:5px; color:brown;"></i> LAS (2000-2019) </p>
+         <p style="margin-left:5px"> <i class="fa fa-square fa-1x" style="margin-right:5px; color:orange;"></i> LAS (1980=1999) </p>
+         <p style="margin-left:5px"> <i class="fa fa-square fa-1x" style="margin-right:5px; color:yellow;"></i> LAS (Pre 1980) </p>
+         </div>
+         """
+         st.write(my_legend_html, unsafe_allow_html=True)
+ 
+      elif 1 == 2:
+      
+         my_legend_html = '''
+           <div style="position: fixed; 
+           bottom: 50px; left: 50px; width: 100px; height: 90px; 
+           border:2px solid grey; z-index:9999; font-size:14px;
+           ">&nbsp; Cool Legend <br>
+               &nbsp; East &nbsp; <i class="fa fa-map-marker fa-2x"
+                    style="color:green"></i><br>
+               &nbsp; West &nbsp; <i class="fa fa-map-marker fa-2x"
+                    style="color:red"></i>
+           </div>
+           '''
+         my_legend_layer = folium.Element(my_legend_html)
+         # Add the legend to the map
+         #my_map.get_root().html.add_child(folium.Element(my_legend_layer))
+         #my_map.get_root().html.add_child(folium.Element(my_legend_layer))
+         #                ).add_to(my_map)
      
  
-   if 1 == 1: # now add markers to my_map
+      if 1 == 1: # now add markers to my_map
       
-      for index, row in df_map.iterrows():
-         lat = row["SurfLat"]
-         long = row["SurfLong"]
-         value = row["Lateral_Length"]
-         color = fig_color(value)
-         folium.CircleMarker(
-                       location = [lat, long],\
-                       radius = 0.05,
-                       color = color,
-                       fill = True,
-                       fill_color = color,
-                       fill_opacity=0.99,  
-                       #popup=str(value)+" meters",\
-                       #icon=folium.Icon(color=color_producer(value))  
-                       ).add_to(my_map)
+         for index, row in df_map.iterrows():
+            lat = row["SurfLat"]
+            long = row["SurfLong"]
+            value = row["Lateral_Length"]
+            color = fig_color(value)
+            folium.CircleMarker(
+                          location = [lat, long],\
+                          radius = 0.05,
+                          color = color,
+                          fill = True,
+                          fill_color = color,
+                          fill_opacity=0.99,  
+                          #popup=str(value)+" meters",\
+                          #icon=folium.Icon(color=color_producer(value))  
+                          ).add_to(my_map)
 
 
 
+         #looks for objects added to map, only one child and folium will treat this together
+         #m.add_child(folium.LayerControl()) 
+         folium.LayerControl().add_to(my_map)
+         events = st_folium(my_map)
+         #st.write(events)
 
 
-
-      #looks for objects added to map, only one child and folium will treat this together
-      #m.add_child(folium.LayerControl()) 
-      folium.LayerControl().add_to(my_map)
-      events = st_folium(my_map)
-      #st.write(events)
 
 
 
