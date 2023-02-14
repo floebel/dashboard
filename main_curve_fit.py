@@ -2,19 +2,18 @@
 
 #from fdl_sub_hyperbolic import *   # A06
 from gekko_functions import *   # A06
+from dca_functions import *
 
 from fdl_sub_html_small import *
 
-
 from sqlite3_functions import *
-from dca_functions import *
 
 import streamlit as st
 import sqlite3
 import pandas as pd
 import seaborn as sns
 import numpy as np
-import probscale
+#import probscale
 import matplotlib.pyplot as plt
 import matplotlib
 import matplotlib.ticker as tick
@@ -599,7 +598,7 @@ def fig_df_summary():
 
 
 
-def fig_group_by(any_state):  ###################
+def fig_group_by(any_state, any_county):  # SPECIAL ###########
    
    # GROUP BY
    #cSelect  = "SELECT P.Year, P.Month, P.Oil, P.Gas, "
@@ -617,8 +616,8 @@ def fig_group_by(any_state):  ###################
    #cSelect += "P.Year, P.Month, P.Oil, P.Gas, "
 
    #cSelect += " (SELECT count(P.LeaseID) FROM LeaseProduction P WHERE P.LeaseID = L.LeaseID) AS 'PROD_PTS', "   
-   cSelect += " (SELECT count(P.LeaseID) FROM LeaseProduction P WHERE P.LeaseID = L.LeaseID AND P.Oil > 0) AS 'OIL_PTS', "   
-   cSelect += " (SELECT count(P.LeaseID) FROM LeaseProduction P WHERE P.LeaseID = L.LeaseID AND P.Gas > 0) AS 'GAS_PTS' "   
+   cSelect += " (SELECT count(P.LeaseID) FROM LeaseProduction P WHERE P.LeaseID = L.LeaseID AND P.Oil > 1.0) AS 'OIL_PTS', "   
+   cSelect += " (SELECT count(P.LeaseID) FROM LeaseProduction P WHERE P.LeaseID = L.LeaseID AND P.Gas > 10.0) AS 'GAS_PTS' "   
 
   
    #cSelect += " (SELECT count(P.LeaseID) FROM LeaseProduction P WHERE P.Oil > 0) AS 'OIL_PTS', "   
@@ -638,12 +637,13 @@ def fig_group_by(any_state):  ###################
    #cSQL += "FROM Lease"
    cFrom   = " FROM Lease L LEFT OUTER JOIN LeaseProduction P ON L.LeaseID = P.LeaseID "
    cWhere  = " WHERE L.LAT_LENGTH >= 1000 "
-   #cWhere += " AND L.MAX_MONTHS >= 12 AND L.MAX_MONTHS <= 60 "
-   cWhere += " AND L.MAX_MONTHS >= 12 "
+   cWhere += " AND L.MAX_MONTHS >= 6 AND L.MAX_MONTHS <= 36 "
+   #cWhere += " AND L.MAX_MONTHS >= 12 "
 
-   cWhere += " AND P.CUMUL_MONTHS >= 0 "
+   cWhere += " AND P.CUMUL_MONTHS >= 0 AND P.CUMUL_MONTHS <= 36 "  # ?????????
    #cWhere += " AND (P.Oil > 0 OR P.Gas > 0) "
-   cWhere += " AND (P.Oil > 0 OR P.Gas > 0) "
+   #cWhere += " AND (P.Oil > 0 OR P.Gas > 0) "
+   cWhere += " AND (P.Oil > 1.0 OR P.Gas > 10.0) "
 
    #nProdPoints = 24
    #cWhere += " AND (SELECT count(*) FROM LeaseProduction PROD WHERE PROD.LeaseID = L.LeaseID) >= " + str(nProdPoints) + " "
@@ -652,11 +652,29 @@ def fig_group_by(any_state):  ###################
    #cWhere += " AND L.COUNTY = 'OKLAHOMA' "
    #cWhere += " AND L.COUNTY = 'GRADY' "
    #cWhere += "	AND L.County IN ('OKLAHOMA', 'GRADY', 'CLEVELAND','WOODS','ALFALFA','GRANT','MAJOR','GARFIELD','BLAINE','KINGFISHER','LOGAN','CANADIAN') "
-   cWhere += "	AND L.County IN ('OKLAHOMA', 'CANADIAN') "
+
+   if any_county == "":
+      fdl = 1
+   else:
+      cWhere += " AND L.COUNTY = '" + any_county + "' "
+
+   
+
+   if 1 == 1:
+      fdl = 1   
+   elif any_state == "KS":
+      cWhere += "AND L.County IN ('COMANCHE', 'HARPER') "
+   elif any_state == "OK":
+      cWhere += "AND L.County IN ('OKLAHOMA', 'CANADIAN') "
+      
 
    cOrderBy = " GROUP BY P.CUMUL_MONTHS "
  
    cSQL = cSelect + cFrom + cWhere + cOrderBy
+
+   if 1 == 2:
+      st.write(cSQL)   
+   
    df = df_from_sqlite(any_state, cSQL)
 
    df["Ave Monthly Oil Per Well"] = df["OIL_SUM"] / df["OIL_PTS"]
@@ -675,7 +693,11 @@ def fig_group_by(any_state):  ###################
    list_drop = ["CUMUL_YEARS", "CUMUL_MONTHS", "OIL_SUM", "GAS_SUM", "Ave Monthly Oil Per Well", "Ave Monthly Gas Per Well"] 
    df = df.drop(list_drop, axis=1)
 
-   df.to_csv("normalized_monthly_production.csv", index=False)
+   df.replace([np.nan, np.inf, -np.inf], 0, inplace=True)
+   
+
+   if 1 == 2:
+      df.to_csv("normalized_monthly_production.csv", index=False)
       
    if 1 == 2:
       st.subheader("df _groupby")
@@ -683,7 +705,17 @@ def fig_group_by(any_state):  ###################
    return df
 
 
-  
+def fig_rate_at_cum_days(q_daily, h_hyperbolic, d_daily, any_cum_days):
+
+   any_days_plus = any_cum_days + 16.0
+   any_days_minus = any_cum_days - 16.0
+
+   any_cumul_minus = 1.0 * fig_hyperbolic_cumulative_volume (q_daily, h_hyperbolic, d_daily, any_days_minus)
+   any_cumul_plus  = 1.0 * fig_hyperbolic_cumulative_volume (q_daily, h_hyperbolic, d_daily, any_days_plus)
+   any_rate = (any_cumul_plus - any_cumul_minus) / 32.0
+   return any_rate
+ 
+ 
 
 
 def hyperbolic_equation(t, qi, b, di):
@@ -702,17 +734,12 @@ def hyperbolic_equation(t, qi, b, di):
    return  qi/np.power((1+b*di*t), 1./b)
    
 
-def scipy_curve_fit(OIL_OR_GAS, list_days, list_production):
-
+def scipy_curve_fit(OIL_OR_GAS, list_days, list_production):   # SPECIAL
 
    if 1 == 2:
       list_days = [ 30, 60, 90, 120, 150, 180, 210]
       list_production = [100, 90, 80, 70, 60, 50, 40]
       #nPoints = len(list_time)      
-
-
-
-
 
    if 1 == 1:   # SCIPY OPTIMIZE CURVE_FIT
             
@@ -722,13 +749,34 @@ def scipy_curve_fit(OIL_OR_GAS, list_days, list_production):
       #if OIL_OR_GAS == "OIL":
       nPoints = len(list_days)
       nMaxPoint = fig_max_point(list_production) 
-      max_daily_rate = list_production[nMaxPoint]   
+      max_daily_rate = list_production[nMaxPoint]
+      max_daily_days = list_days[nMaxPoint]
+ 
+      max_production_days = list_days[nPoints - 1]
+      cstr = OIL_OR_GAS + " max production days = " + str(max_production_days)
+      if 1 == 1:
+         print(cstr)   
+         st.write(cstr)
+      
+      half_production_days = int(max_production_days/2.0)
+      quarter_production_days = int(0.25 * max_production_days)
+      last_quarter_production_days = int(0.75 * max_production_days)
+
+      mid_adjust_days = half_production_days
   
       cstr = OIL_OR_GAS + " max daily rate = " + str(max_daily_rate) + " at point " + str(nMaxPoint)
       if 1 == 1:
          print(cstr)   
-         st.write(cstr)         
+         st.write(cstr)
+      cstr = OIL_OR_GAS + " max daily rate = " + str(max_daily_rate) + " at cumul days " + str(max_daily_days)
+      if 1 == 1:
+         print(cstr)   
+         st.write(cstr)    
 
+      mid_max_daily_rate = 0
+      mid_max_daily_days = 0
+      
+      nIncluded = 0
       for i in range(nPoints):
          if i < nMaxPoint:  # only analyze points on or after nMaxPoint
             fdl = 1
@@ -736,15 +784,51 @@ def scipy_curve_fit(OIL_OR_GAS, list_days, list_production):
             next_time = list_days[i]
             #if OIL_OR_GAS == "OIL":
             next_rate = list_production[i]
-            list_time.append(next_time)
-            list_rate.append(next_rate)
+              
+            #if nIncluded <= 6:    # always include the first 6 points from max rate ...
+            #   list_time.append(next_time)
+            #   list_rate.append(next_rate)
+            #   nIncluded = nIncluded + 1
+            if 1 == 2:  # next_time >= quarter_production_days:  # add more weight to 2nd half of history
+               list_time.append(next_time)
+               list_rate.append(next_rate)
+               nIncluded = nIncluded + 1  
+            elif next_time >= half_production_days:  # add more weight to 2nd half of history
+               if next_rate > mid_max_daily_rate:
+                  mid_max_daily_rate = next_rate
+                  mid_max_daily_days = next_time 
+               
+               list_time.append(next_time - mid_adjust_days) # ??????
+               list_rate.append(next_rate)
+               nIncluded = nIncluded + 1
+               if next_time >= last_quarter_production_days: # more weight ....
+                  list_time.append(next_time - mid_adjust_days)  # ??????
+                  list_rate.append(next_rate)   
 
+      if 1 == 2:
+         st.write(list_time)
+         st.write(list_rate)
        
-
-
+      cstr = "mid_max_daily_rate = " + str(mid_max_daily_rate)
+      st.write(cstr)
+      cstr = "mid_max_daily_days = " + str(mid_max_daily_days)
+      st.write(cstr)  
+      
       #Hyperbolic curve fit 
-      qi_min = max_daily_rate * 0.50
-      qi_max = max_daily_rate * 1.50  # 1.10
+      if 1 == 2:
+         qi_min = max_daily_rate * 0.50
+         qi_max = max_daily_rate * 1.50  # 1.10
+      else:
+         qi_min = mid_max_daily_rate * 0.95
+         qi_max = mid_max_daily_rate * 1.05
+         #mid_max_daily_rate = next_rate
+         #mid_max_daily_days = next_time
+
+      cstr = "qi_min = " + str(qi_min)
+      st.write(cstr)
+      cstr = "qi_max = " + str(qi_max)
+      st.write(cstr)  
+      
       b_min = 0.001 # -3.0 # 0.001
       #b_min = -3.0 # -3.0 # 0.001
       b_max = 3.0
@@ -753,6 +837,8 @@ def scipy_curve_fit(OIL_OR_GAS, list_days, list_production):
 
       np_time = np.array(list_time)
       np_rate = np.array(list_rate)
+
+      
  
    
       opt_hyp, cov_hyp = curve_fit(hyperbolic_equation,\
@@ -762,7 +848,8 @@ def scipy_curve_fit(OIL_OR_GAS, list_days, list_production):
 
       #opt_hyp = np.round(opt_hyp, decimals=5)
 
-      print('Hyperbolic Fit Curve-fitted Variables: qi='+str(opt_hyp[0])+', b='+str(opt_hyp[1])+', di='+str(opt_hyp[2]))
+
+      #cstr = "Hyperbolic Fit Curve-fitted Variables: qi='+str(opt_hyp[0])+', b='+str(opt_hyp[1])+', di='+str(opt_hyp[2]))
       #input("wait")
       q_daily = opt_hyp[0]
       if 1 == 1:
@@ -779,7 +866,7 @@ def scipy_curve_fit(OIL_OR_GAS, list_days, list_production):
          cstr = "Predicted Daily Di = " + str(d_daily)
          st.write(cstr)
 
-      max_plot_rate = max_daily_rate
+      max_plot_rate = max_daily_rate  # ????????
       if q_daily > max_plot_rate:
          max_plot_rate = q_daily
       if 1 == 1:
@@ -862,40 +949,86 @@ def scipy_curve_fit(OIL_OR_GAS, list_days, list_production):
       #ax.step(series_time, series_rate, color='blue')
       #ax.step(np_cum_days_std, series_rate, color='blue', label="Normalized Production Data")      
 
+      # list_days, list_production):   
+
+
       if OIL_OR_GAS == "OIL":
          #ax.step(xm, ym, color='green', label="Normalized Oil Rate BOPD")
-         ax.step(list_time, list_rate, color='green', label="Normalized Oil Rate BOPD")
-    
+         #ax.step(list_time, list_rate, color='green', label="Normalized Oil Rate BOPD")
+         ax.step(list_days, list_production, color='green', label="Normalized Oil Rate BOPD")
+      
       elif OIL_OR_GAS == "GAS":
          #ax.step(xm, ym, color='red', label="Normalized Gas Rate MCFD")
-         ax.step(list_time, list_rate, color='red', label="Normalized Gas Rate MCFD")
- 
+         #ax.step(list_time, list_rate, color='red', label="Normalized Gas Rate MCFD")
+         ax.step(list_days, list_production, color='red', label="Normalized Gas Rate MCFD")
+
       #list_predict_days = []
       #list_predict_years = []
       #list_actual_rate = []
       #list_predict_rate = []
       #list_predict_cumul = []
 
-      min_time = min(list_time)
-      max_time = max(list_time)
+      #min_time = min(list_time)
+      #max_time = max(list_time)
 
-      np_time = np.array(list_time)
-      np_rate = np.array(list_rate)
+      #np_time = np.array(list_time)
+      #np_rate = np.array(list_rate)
 
-      nPlot = len(list_time)  
+      #nPlot = len(list_time)  
 
       #plt.step(list_time, list_rate, color='green', label="Normalized Oil Rate BOPD")
-      np_xdata = np.linspace(min_time, max_time, nPlot)   # define data to predict 
-      q = hyperbolic_equation(np_time, opt_hyp[0], opt_hyp[1], opt_hyp[2]) 
+
+      #np_xdata = np.linspace(min_time, max_time, nPlot)   # define data to predict 
+
+      #q = hyperbolic_equation(np_time, opt_hyp[0], opt_hyp[1], opt_hyp[2]) 
+
       #plt.plot(np_xdata, q, '-', color = "blue", label="Hyperbolic Fit" )
-      ax.plot(np_xdata, q, color='blue', linestyle = 'dashed', label = "Hyperbolic Curve Fit")
+
+      #ax.plot(np_xdata, q, color='blue', linestyle = 'dashed', label = "Hyperbolic Curve Fit")
+
       plt.yscale('log') 
 
 
       if 1 == 2:
          #ax.plot(list_predict_years, list_predict_rate, color='blue', linestyle = 'dashed', label = "Predicted Rate From Hyperbolic Eqn")
          ax.plot(list_predict_days, list_predict_rate, color='blue', linestyle = 'dashed', label = "Predicted Rate From Hyperbolic Eqn")
-    
+
+      #   any_cumul_01 = 0.001 * fig_hyperbolic_cumulative_volume (q_daily, h_hyperbolic, d_daily, 1.0 * 365.25)
+      #   any_cumul_01 = 0.001 * fig_hyperbolic_cumulative_volume (q_daily, h_hyperbolic, d_daily, 1.0 * 365.25)
+
+      #max_daily_rate = list_production[nMaxPoint]
+      #max_daily_days = list_days[nMaxPoint]
+
+      list_pred_time = []
+      list_pred_rate = []
+      # OIL_OR_GAS, list_days, list_production): 
+      #nProductionPoints = len(list_production)
+      #nProductionDays = int(list_production[nProductionPoints-1])
+
+      #cstr = "nProductionDays = " + str(nProductionDays)
+      #st.write(cstr)
+
+      # start forecast here ... mid_adjust_days = half_production_days
+
+      nForecastPoints = int(max_production_days / 30.4375) # + 24  # extra 2 years to forecast    
+      #nKeepPoints = len(list_time)
+      #nKeepDays = int(list_time[nKeepPoints-1])
+      adjust_days = max_daily_days 
+      for i in range(nForecastPoints):
+         #next_days = ((i + 1) * 30.4375) + adjust_days - 30.4375
+         next_days = ((i + 1) * 30.4375) - 30.4375  # + mid_adjust_days #  - 30.4375  # ??????
+ 
+         #st.write(next_days)
+         if next_days <= max_production_days - half_production_days:  # since some points are weighted ... 
+            next_rate = fig_rate_at_cum_days(q_daily, h_hyperbolic, d_daily, next_days)
+            list_pred_time.append(next_days + mid_adjust_days)  # ??????
+            list_pred_rate.append(next_rate)
+
+      #st.write(list_pred_time)
+      #st.write(list_pred_rate)
+ 
+            
+      ax.plot(list_pred_time, list_pred_rate, color='purple', linestyle = 'dashed', label = "Hyperbolic Curve Fit")
 
       if 1 == 2:
          ax.plot(xm, yp, color='blue', linestyle = 'dashed', label = "Predicted Rate From Hyperbolic Eqn")
@@ -998,16 +1131,16 @@ def scipy_curve_fit(OIL_OR_GAS, list_days, list_production):
          ax.set_ylim(1.0, 100000)
          
       elif max_plot_rate >= 10000:
-         ax.set_yticks([0.3, 1, 3, 10, 30, 50, 100, 300, 1000, 3000, 10000, 30000])
+         ax.set_yticks([1, 3, 10, 30, 50, 100, 300, 1000, 3000, 10000, 30000])
          ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
          #ax.get_yaxis().set_major_formatter(FormatStrFormatter('%.1f')) 
-         ax.set_ylim(0.3, 30000)
+         ax.set_ylim(1.0, 30000)
          
       elif max_plot_rate >= 3000:
-         ax.set_yticks([0.1, 0.3, 1, 3, 10, 30, 50, 100, 300, 1000, 3000, 10000])
+         ax.set_yticks([1, 3, 10, 30, 50, 100, 300, 1000, 3000, 10000])
          ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
          #ax.get_yaxis().set_major_formatter(FormatStrFormatter('%.1f')) 
-         ax.set_ylim(0.1, 10000)
+         ax.set_ylim(1, 10000)
          
       #elif max_plot_rate >= 2000:
       #   ax.set_yticks([0.03, 0.10, 0.3, 1, 3, 10, 30, 100, 300, 1000, 3000, 10000])
@@ -1016,10 +1149,10 @@ def scipy_curve_fit(OIL_OR_GAS, list_days, list_production):
       #   ax.set_ylim(0.03, 10000)
 
       elif max_plot_rate >= 1000:
-         ax.set_yticks([0.03, 0.1, .3, 1, 3, 10, 30, 100, 300, 1000, 3000])
+         ax.set_yticks([1, 3, 10, 30, 100, 300, 1000, 3000])
          ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
          #ax.get_yaxis.set_major_formatter(FormatStrFormatter('%.2f')) 
-         ax.set_ylim(0.03, 3000)
+         ax.set_ylim(1, 3000)
 
       #elif max_plot_rate >= 500:
       #   ax.set_yticks([0.01, 0.03, .1, .3, 1, 3, 10, 30, 100, 300, 1000, 3000])
@@ -1028,28 +1161,28 @@ def scipy_curve_fit(OIL_OR_GAS, list_days, list_production):
       #   ax.set_ylim(0.01, 3000)
 
       elif max_plot_rate >= 300:
-         ax.set_yticks([0.003, 0.01, .03, 0.10, 0.30, 1, 3, 10, 30, 100, 300, 1000])
+         ax.set_yticks([1, 3, 10, 30, 100, 300, 1000])
          ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
          #ax.get_yaxis().set_major_formatter(FormatStrFormatter('%.3f')) 
-         ax.set_ylim(0.003, 1000)        
+         ax.set_ylim(1, 1000)        
             
       elif max_plot_rate >= 100:
-         ax.set_yticks([0.001, 0.003, 0.01, 0.03, 0.10, 0.30, 1, 3, 10, 30, 100, 300])
+         ax.set_yticks([1, 3, 10, 30, 100, 300])
          ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
          #ax.get_yaxis().set_major_formatter(FormatStrFormatter('%.3f')) 
-         ax.set_ylim(0.001, 300)
+         ax.set_ylim(1, 300)
 
       elif max_plot_rate >= 30:
-         ax.set_yticks([0.003, 0.01, 0.03, 0.10, 0.30, 1, 3, 10, 30, 100])
+         ax.set_yticks([1, 3, 10, 30, 100])
          ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
          #ax.get_yaxis().set_major_formatter(FormatStrFormatter('%.3f')) 
-         ax.set_ylim(0.003, 100)
+         ax.set_ylim(1, 100)
 
       elif max_plot_rate >= 10:
-         ax.set_yticks([0.003, 0.01, 0.03, 0.10, 0.30, 1, 3, 10, 30])
+         ax.set_yticks([1, 3, 10, 30])
          ax.get_yaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
          #ax.get_yaxis().set_major_formatter(FormatStrFormatter('%.3f')) 
-         ax.set_ylim(0.003, 100)        
+         ax.set_ylim(1, 100)        
                   
                
       elif 1 == 1:
@@ -1343,6 +1476,18 @@ def scipy_curve_fit(OIL_OR_GAS, list_days, list_production):
    #sql_within_database(oSQLITE, sql)
 
 
+  
+def handle_state_change():
+   if st.session_state.state_picked:
+      st.session_state.type = st.session_state.state_picked
+      
+   
+def handle_county_change():
+   if st.session_state.county_picked:
+      st.session_state.type = st.session_state.county_picked
+      
+   
+
 
 
 def main():
@@ -1353,7 +1498,20 @@ def main():
    #    """
    #)
 
-   
+
+
+   if 1 == 2:
+      #st.subheader("Distinct Query")
+      cSQL = "SELECT * FROM Lease LIMIT 10 "
+      df = df_from_sqlite("KS", cSQL)
+      list_cols = list(df.columns)
+      st.write(list_cols)
+      #st.dataframe(df)
+      cSQL = "SELECT * FROM Lease LIMIT 10 "
+      df = df_from_sqlite("OK", cSQL)
+      list_cols = list(df.columns)
+      st.write(list_cols)
+      #st.dataframe(df)
 
    if 1 == 2:
       st.subheader("Distinct Query")
@@ -1363,27 +1521,109 @@ def main():
 
 
    
-   st.subheader("Ave Normalized Production Per Well")
+   #st.subheader("Ave Normalized Production Per Well")
+
+   #any_state = "OK"
+
+
+   #OIL_OR_GAS = "GAS"  ######################
+      
 
    any_state = "OK"
+   state_picked = "OK"
+   st.session_state['any_state'] = ""  # initialize          
+
+   if len(st.session_state.any_state) == 0:
+      any_title = "Select either KS (Kansas) or OK (Oklahoma) to analyze"
+   else:  
+      any_title = "Hyperbolic curve fitting in State Of " + any_state
+   #st.title(any_title)
+   st.subheader(any_title)
+ 
+   #st.info(
+   #    """
+   #    This app is maintained by Fulton Loebel
+   #    """
+   #)
+
+   list_states = ["KS", "OK"]
    
-   df = fig_group_by(any_state)
+   state_picked = st.radio("Select another state", list_states,
+                           on_change=handle_state_change, key='state_picked')
+   if state_picked:
 
-   st.dataframe(df)
+      any_state = state_picked
+      cstr = "You currently have state " + state_picked + " selected (click above to change states)"
+      st.write(cstr)
+      
+      st.session_state['any_state'] = state_picked
+
+      if any_state == "KS":
+         list_counties = ["COMANCHE", "HARPER", "BARBER", "SHERMAN"]
+      elif any_state == "OK":   
+         list_counties = ["PITTSBURG", "HUGHES", "HASKELL", "COAL", "ELLIS", "LE FLORE", "MC INTOSH", "CANADIAN", "LINCOLN", "ROGER MILLS", "ATOKA"]
+      
+      #county_picked = st.selectbox("Select another county ", options = list_counties, index=0)
+      county_picked = st.selectbox("Select another county ", options = list_counties, index=0,
+                      on_change=handle_county_change, key='county_picked')
+
+      if county_picked:
+
+         any_county = county_picked
+         cstr = "You currently have county " + county_picked + " selected (click above to change counties)"
+         st.write(cstr)
+         st.write("")
+
+         st.session_state['any_county'] = county_picked
+
+      
+      #county_picked = st.selectbox("Selectbox: ", options=["Jane", "Bob", "Alice"], index=0)     
   
-   list_days = df["CUMUL_DAYS"].values.tolist()
+   #if len(st.session_state.any_state) >= 1:
+   if st.session_state['any_state'] in list_states:
 
-   list_oil_rates = df['BOPD'].values.tolist()
-   list_gas_rates = df['MCFD'].values.tolist()
-   
-   #OIL_OR_GAS = "OIL"
-   #values = fit_hyperbolic_two_phase ( "OIL", list_oil_rates, list_days)  
-   #values = fit_hyperbolic_two_phase ( "GAS", list_gas_rates, list_days)  
+      #any_county = ""
+      df = fig_group_by(any_state, any_county)
 
-   scipy_curve_fit("OIL", list_days, list_oil_rates)
-   scipy_curve_fit("GAS", list_days, list_gas_rates)
+      st.dataframe(df)
   
+      list_days = df["CUMUL_DAYS"].values.tolist()
+
+      list_oil_rates = df['BOPD'].values.tolist()
+      list_gas_rates = df['MCFD'].values.tolist()
+
+      df_oil = pd.DataFrame()
+      df_oil["CUMUL_DAYS"] = list_days
+      df_oil["BOPD"] = list_oil_rates
+      df_oil = df_oil.query('BOPD > 0.0')  # drop OIL points with no production
+      list_oil_days = df_oil["CUMUL_DAYS"].values.tolist()
+      list_oil_rates = df_oil['BOPD'].values.tolist()
+ 
+      df_gas = pd.DataFrame()
+      df_gas["CUMUL_DAYS"] = list_days
+      df_gas["MCFD"] = list_gas_rates
+      df_gas = df_gas.query('MCFD > 0.0')  # drop GAS points with no production
+      list_gas_days = df_gas["CUMUL_DAYS"].values.tolist()
+      list_gas_rates = df_gas['MCFD'].values.tolist()
+
+          
+      #OIL_OR_GAS = "OIL"
+      #values = fit_hyperbolic_two_phase ( "OIL", list_oil_rates, list_days)  
+      #values = fit_hyperbolic_two_phase ( "GAS", list_gas_rates, list_days)  
+
+      if len(list_oil_days) == 0:
+         cstr = "No OIL production data points found for query in state of " + any_state
+         st.write(cstr)
+      else:   
+         scipy_curve_fit("OIL", list_oil_days, list_oil_rates)
+
+      if len(list_gas_days) == 0:
+         cstr = "No GAS production data points found for query in state of " + any_state
+         st.write(cstr)
+      else:   
+         scipy_curve_fit("GAS", list_gas_days, list_gas_rates)
+
+
+
 
      
-
-   

@@ -329,7 +329,7 @@ list_rate = [100, 90, 80, 70, 60, 50, 40]
 nPoints = len(list_time)      
 
 
-if 1 == 1:
+if 1 == 2:
 
    #Hyperbolic curve fit 
    qi_min = 100.0 * 0.95
@@ -767,7 +767,7 @@ if 1 == 2:
    
 # CREATE COLUMNS ...
 if 1 == 2:
-   any_state = "OK"
+   any_state = "KS"
    oSQLITE = open_sqlite_conn(any_state)
    #cSQL = "ALTER TABLE LeaseProduction ADD COLUMN LAT_LENGTH"  # float text integer
    #cSQL = "ALTER TABLE LeaseProduction ADD COLUMN First_Year"
@@ -795,42 +795,42 @@ if 1 == 1:    # Update Lease with single command
    #sql = "on ...
    #  	cSelect += "ROUND(2000.01 + DATEDIFF( 'd',  DateSerial(2000, 01, 01),  DateSerial(P.Year, P.Month, 28)  ) / 365.25,3) AS 'CALENDAR YEARS', "   // 2005 ..............
 
-   if 1 == 2:
-      #cUpdate = "UPDATE LeaseProduction "
-      #cUpdate += " SET PRODDATE = DateSerial(Year, Month, 15) "
-      # cursor.execute("UPDATE mytable SET date_field = strftime('%Y-%m-%d', ?, '+10 day') WHERE date_field = ?", (current_date, current_date))
-      cUpdate = "UPDATE LeaseProduction "
-      cUpdate += " SET PRODDATE = strftimeDateSerial(Year, Month, 15) " 
-   elif 1 == 2:   
-      cUpdate  = "UPDATE LeaseProduction "
-      cUpdate += " SET LeaseProduction.FIRSTDATE = #01/01/1970# "
-      cUpdate += " WHERE LeaseProduction.FIRSTDATE is null "
-   elif 1 == 2:   
-      cUpdate  = "UPDATE LeaseProduction "
-      cUpdate += " SET LeaseProduction.NORMFIFF = DateDiff('d',LeaseProduction.FIRSTDATE,LeaseProduction.PRODDATE) "
-   elif 1 == 2:
-      cUpdate = "UPDATE LeaseProduction "
-      cUpdate += " SET LeaseProduction.PRODDATE = DateSerial(Year, Month, 15) "
-   elif 1 == 2:
-      cUpdate = "UPDATE LeaseProduction "
-      cUpdate += " SET LeaseProduction.NORMALDATE = DateAdd('d', DateDiff('d',LeaseProduction.FIRSTDATE,LeaseProduction.PRODDATE),#01/01/1970#) "
-   elif 1 == 2:
-      cUpdate  = "UPDATE LeaseProduction "
-      cUpdate += " SET LeaseProduction.NORMMONTH = MONTH(LeaseProduction.NORMALDATE), LeaseProduction.NORMYEAR = YEAR(LeaseProduction.NORMALDATE) "
-   elif 1 == 2:
-      cUpdate  = "UPDATE LeaseProduction "
-      cUpdate += " SET LeaseProduction.NORMMONTH = MONTH(LeaseProduction.NORMALDATE), LeaseProduction.NormYear = YEAR(LeaseProduction.NORMALDATE) "
-   elif 1 == 2:
-      cUpdate  = "UPDATE LeaseProduction "
-      cUpdate += " SET LeaseProduction.CUMUL_MONTHS = (12.0 * (LeaseProduction.NORMYEAR - 1970.0)) + LeaseProduction.NORMMONTH "
+   #if 1 == 2:
+   #   #cUpdate = "UPDATE LeaseProduction "
+   #   #cUpdate += " SET PRODDATE = DateSerial(Year, Month, 15) "
+   #   # cursor.execute("UPDATE mytable SET date_field = strftime('%Y-%m-%d', ?, '+10 day') WHERE date_field = ?", (current_date, current_date))
+   #   cUpdate = "UPDATE LeaseProduction "
+   #   cUpdate += " SET PRODDATE = strftimeDateSerial(Year, Month, 15) " 
+   #elif 1 == 2:   
+   #   cUpdate  = "UPDATE LeaseProduction "
+   #   cUpdate += " SET LeaseProduction.FIRSTDATE = #01/01/1970# "
+   #   cUpdate += " WHERE LeaseProduction.FIRSTDATE is null "
+   #elif 1 == 2:   
+   #   cUpdate  = "UPDATE LeaseProduction "
+   #   cUpdate += " SET LeaseProduction.NORMFIFF = DateDiff('d',LeaseProduction.FIRSTDATE,LeaseProduction.PRODDATE) "
+   #elif 1 == 2:
+   #   cUpdate = "UPDATE LeaseProduction "
+   #   cUpdate += " SET LeaseProduction.PRODDATE = DateSerial(Year, Month, 15) "
+   #elif 1 == 2:
+   #   cUpdate = "UPDATE LeaseProduction "
+   #   cUpdate += " SET LeaseProduction.NORMALDATE = DateAdd('d', DateDiff('d',LeaseProduction.FIRSTDATE,LeaseProduction.PRODDATE),#01/01/1970#) "
+   #elif 1 == 2:
+   #   cUpdate  = "UPDATE LeaseProduction "
+   #   cUpdate += " SET LeaseProduction.NORMMONTH = MONTH(LeaseProduction.NORMALDATE), LeaseProduction.NORMYEAR = YEAR(LeaseProduction.NORMALDATE) "
+   #elif 1 == 2:
+   #   cUpdate  = "UPDATE LeaseProduction "
+   #   cUpdate += " SET LeaseProduction.NORMMONTH = MONTH(LeaseProduction.NORMALDATE), LeaseProduction.NormYear = YEAR(LeaseProduction.NORMALDATE) "
+   #elif 1 == 2:
+   #   cUpdate  = "UPDATE LeaseProduction "
+   #   cUpdate += " SET LeaseProduction.CUMUL_MONTHS = (12.0 * (LeaseProduction.NORMYEAR - 1970.0)) + LeaseProduction.NORMMONTH "
 
    if 1 == 2: # WORKS
       cUpdate = "UPDATE LeaseProduction SET LAT_LENGTH = ( SELECT LAT_LENGTH FROM Lease WHERE LeaseProduction.LeaseID = Lease.LeaseID )"    
    elif 1 == 2:
       #cUpdate = "UPDATE LeaseProduction SET PRODDATE = datetime('" + str(Year) + "-" + str(Month) + "-15)" 
       cUpdate  = "UPDATE LeaseProduction SET PRODDATE = datetime( CAST(Year AS TEXT) || '-' || CAST(Month AS TEXT) || '-' || '15') "
-   elif 1 == 2:  # WORKS
-      cUpdate = "UPDATE Lease SET FieldDirEntityType = printf('%08d', User14)"  # WORKS
+   #elif 1 == 2:  # WORKS
+   #   cUpdate = "UPDATE Lease SET FieldDirEntityType = printf('%08d', User14)"  # WORKS
    elif 1 == 2:  # WORKS
       cUpdate = "UPDATE Lease SET LAT_LENGTH = ( SELECT LAT_LENGTH FROM Lease WHERE LeaseProduction.LeaseID = Lease.LeaseID )"    
    elif 1 == 2:  # WORKS
@@ -859,7 +859,7 @@ if 1 == 1:    # Update Lease with single command
 
 
 
-if 1 == 1:    # Update LeaseProduction with single command
+if 1 == 2:    # Update LeaseProduction with single command
    any_state = "OK"     
    df_prod = df_from_sqlite(any_state, "SELECT * FROM LeaseProduction")
    df_to_webbrowser("df_prod BEFORE", df_prod)
@@ -905,7 +905,7 @@ if 1 == 1:    # Update LeaseProduction with single command
       cUpdate  = "UPDATE LeaseProduction SET PRODDATE = datetime( CAST(Year AS TEXT) || '-' || CAST(Month AS TEXT) || '-' || '15') "
    elif 1 == 2:  # WORKS
       cUpdate = "UPDATE Lease SET FieldDirEntityType = printf('%08d', User14)"  # WORKS
-   elif 1 == 2:  # WORKS
+   elif 1 == 1:  # WORKS
       cUpdate = "UPDATE LeaseProduction SET First_Year = ( SELECT First_Year FROM Lease WHERE LeaseProduction.LeaseID = Lease.LeaseID )"    
    elif 1 == 2:  # WORKS
       cUpdate = "UPDATE LeaseProduction SET First_Month = ( SELECT First_Month FROM Lease WHERE LeaseProduction.LeaseID = Lease.LeaseID )"    

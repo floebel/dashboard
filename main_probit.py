@@ -49,9 +49,11 @@ def main():
    cSQL += "GROUP BY First_Year ORDER BY count(First_Year) DESC LIMIT 7" # LIMIT 20 ASC
    df_year_summary = df_from_sqlite(any_state, cSQL)
    list_years = df_year_summary["First_Year"].values.tolist()
-   st.write(list_years)
+
+   #st.write(list_years)
    nYears = len(list_years)
-   st.dataframe(df_year_summary)
+
+   #st.dataframe(df_year_summary)
 
 
 
@@ -66,7 +68,7 @@ def main():
    cSQL += "GROUP BY OPERATOR ORDER BY count(OPERATOR) DESC LIMIT 7" # LIMIT 20 ASC
    df_operator_summary = df_from_sqlite(any_state, cSQL)
    list_operators = df_operator_summary["Operator"].values.tolist()
-   st.write(list_operators)
+   #st.write(list_operators)
    nOperators = len(list_operators)
    st.dataframe(df_operator_summary)
 

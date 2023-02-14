@@ -6,7 +6,6 @@ from gekko_functions import *   # A06
 from fdl_sub_html_small import *
 
 
-
 from sqlite3_functions import *
 from dca_functions import *
 
@@ -673,7 +672,8 @@ def fig_group_by(any_state):  ###################
    list_drop = ["CUMUL_YEARS", "CUMUL_MONTHS", "OIL_SUM", "GAS_SUM", "Ave Monthly Oil Per Well", "Ave Monthly Gas Per Well"] 
    df = df.drop(list_drop, axis=1)
 
-   df.to_csv("normalized_monthly_production.csv", index=False)
+   if 1 == 2:
+      df.to_csv("normalized_monthly_production.csv", index=False)
       
    if 1 == 2:
       st.subheader("df _groupby")
@@ -727,19 +727,26 @@ def hyperbolic_equation(t, qi, b, di):
    """
    #return qi/((1.0+b*di*t)**(1.0/b))
    return  qi/np.power((1+b*di*t), 1./b)
+
+   
+def handle_change():
+   if st.session_state.state_picked:
+      st.session_state.type = st.session_state.state_picked
+      
    
 
 
 def main():
-   st.title("Hyperbolic Curve Fitting")
+
+   
+   #st.title("Hyperbolic Curve Fitting")
    #st.info(
    #    """
    #    This app is maintained by Fulton Loebel
    #    """
    #)
 
-
-   
+  
 
    if 1 == 2:
       st.subheader("Distinct Query")
@@ -747,81 +754,113 @@ def main():
       df = df_from_sqlite("OK", cSQL)
       st.dataframe(df)
 
-
-   
-   st.subheader("Ave Normalized Production Per Well")
+   OIL_OR_GAS = "GAS"  ######################
+      
 
    any_state = "OK"
-   
-   df = fig_group_by(any_state)
+   state_picked = "OK"
+   st.session_state['any_state'] = ""  # initialize          
 
-   st.dataframe(df)
-  
-   list_days = df["CUMUL_DAYS"].values.tolist()
-
-   list_oil_rates = df['BOPD'].values.tolist()
-   list_gas_rates = df['MCFD'].values.tolist()
-   
-   #OIL_OR_GAS = "OIL"
-   #values = fit_hyperbolic_two_phase ( "OIL", list_oil_rates, list_days)  
-   #values = fit_hyperbolic_two_phase ( "GAS", list_gas_rates, list_days)  
-
-
-   if 1 == 2:  
-      values = fit_hyperbolic_one_phase ( "OIL", list_oil_rates, list_days)  
-
-      values = fit_hyperbolic_one_phase ( "GAS", list_gas_rates, list_days)  
-
-   #print()
-   #print("values from fit_hyperbolic_one_phase")
-   #print(values)
-   #print()
-
-   if 1 == 2: 
-      q_daily = values[0]
-      cstr = "q_daily = " + str(q_daily)
-      st.write(cstr)
-      h_hyperbolic = values[1]
-      cstr = "h_hyperbolic = " + str(h_hyperbolic)
-      st.write(cstr)  
-      d_daily = values[2]
-      cstr = "d_daily = " + str(d_daily)
-      st.write(cstr)  
-      d_yearly = values[3]
-      cstr = "d_yearly = " + str(d_yearly)
-      st.write(cstr)  
-      #cstr = "from oil_comparison_graph returned from GEKKO ONE PHASE ... q_daily = " + str(q_daily) + " h_hyperbolic = " + str(h_hyperbolic) + " d_yearly = " + str(d_yearly) + " d_daily = " + str(d_daily)
-      #print(cstr)
-      #input("Press ENTER to continue...")
-
-   
-   #df = fig_df_lease()
-   #df = fig_df_summary()
-   
+   if len(st.session_state.any_state) == 0:
+      any_title = "Select either KS (Kansas) or OK (Oklahoma) to analyze"
+   else:  
+      any_title = "Hyperbolic curve fitting in State Of " + any_state
+   #st.title(any_title)
+   st.subheader(any_title)
  
-   #df = query_rate_time_data()
+   #st.info(
+   #    """
+   #    This app is maintained by Fulton Loebel
+   #    """
+   #)
 
-   #df_to_webbrowser("df", df)
+   list_states = ["KS", "OK"]
    
-   #cSQL  = "SELECT P.LeaseIDacount(COUNTY) AS 'LEASE COUNT', COUNTY, STATE FROM Lease "
-   #cSQL += "GROUP BY COUNTY ORDER BY count(COUNTY) DESC" # LIMIT 20 ASC
-   # LIMIT 10
+   state_picked = st.radio("Select another state to analyze", list_states,
+                           on_change=handle_change, key='state_picked')
+   if state_picked:
+
+      any_state = state_picked
+      cstr = "You currently have " + state_picked + " selected (click above to change states)"
+      st.write(cstr)
+      
+      st.session_state['any_state'] = state_picked                       
+  
+   #if len(st.session_state.any_state) >= 1:
+   if st.session_state['any_state'] in list_states:
+      
+      #st.subheader("Ave Normalized Production Per Well")
+
+      #any_state = "OK"
    
-   #with st.spinner("Loading  ..."):
-   #df_county_summary = df_from_sqlite("KS", cSQL)
+      df = fig_group_by(any_state)
 
-   #df_county_summary = database_to_df(oENGINE, cSQL)
-   #df_county_summary = df_county_summary.head(20)
+      if 1 == 2:
+         st.dataframe(df)
+  
+      list_days = df["CUMUL_DAYS"].values.tolist()
+
+      list_oil_rates = df['BOPD'].values.tolist()
+      list_gas_rates = df['MCFD'].values.tolist()
+   
+      #OIL_OR_GAS = "OIL"
+      #values = fit_hyperbolic_two_phase ( "OIL", list_oil_rates, list_days)  
+      #values = fit_hyperbolic_two_phase ( "GAS", list_gas_rates, list_days)  
 
 
-   if 1 == 1:   # SCIPY OPTIMIZE CURVE_FIT
+      if 1 == 2:  
+         values = fit_hyperbolic_one_phase ( "OIL", list_oil_rates, list_days)  
+         values = fit_hyperbolic_one_phase ( "GAS", list_gas_rates, list_days)  
+
+      #print()
+      #print("values from fit_hyperbolic_one_phase")
+      #print(values)
+      #print()
+
+      if 1 == 2: 
+         q_daily = values[0]
+         cstr = "q_daily = " + str(q_daily)
+         st.write(cstr)
+         h_hyperbolic = values[1]
+         cstr = "h_hyperbolic = " + str(h_hyperbolic)
+         st.write(cstr)  
+         d_daily = values[2]
+         cstr = "d_daily = " + str(d_daily)
+         st.write(cstr)  
+         d_yearly = values[3]
+         cstr = "d_yearly = " + str(d_yearly)
+         st.write(cstr)  
+         #cstr = "from oil_comparison_graph returned from GEKKO ONE PHASE ... q_daily = " + str(q_daily) + " h_hyperbolic = " + str(h_hyperbolic) + " d_yearly = " + str(d_yearly) + " d_daily = " + str(d_daily)
+         #print(cstr)
+         #input("Press ENTER to continue...")
+
+   
+      #df = fig_df_lease()
+      #df = fig_df_summary()
+    
+      #df = query_rate_time_data()
+
+      #df_to_webbrowser("df", df)
+   
+      #cSQL  = "SELECT P.LeaseIDacount(COUNTY) AS 'LEASE COUNT', COUNTY, STATE FROM Lease "
+      #cSQL += "GROUP BY COUNTY ORDER BY count(COUNTY) DESC" # LIMIT 20 ASC
+      # LIMIT 10
+   
+      #with st.spinner("Loading  ..."):
+      #df_county_summary = df_from_sqlite("KS", cSQL)
+
+      #df_county_summary = database_to_df(oENGINE, cSQL)
+      #df_county_summary = df_county_summary.head(20)
+
+
+      # if 1 == 1:   # SCIPY OPTIMIZE CURVE_FIT ########
 
       #list_rates = list_gas_rates
          
       list_time = []
       list_rate = []
 
-      OIL_OR_GAS = "GAS"  ######################
+      
 
       if OIL_OR_GAS == "OIL":
          nPoints = len(list_days)
@@ -857,8 +896,7 @@ def main():
             list_time.append(next_time)
             list_rate.append(next_rate)
 
-
-        
+       
 
 
       #Hyperbolic curve fit 
